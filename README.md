@@ -9,8 +9,6 @@ A modern Electron-based application that provides a circular webcam overlay with
 - 🎛️ **Camera Selection**: Choose from available cameras via intuitive controls
 - 🔒 **Lock Mode**: Toggle between interactive and click-through modes
 - 📱 **Collapsible Controls**: Clean, minimal control interface
-- 🍎 **macOS Native**: Includes proper entitlements and system integration
-- 🖼️ **System Tray**: Convenient tray icon for easy access
 
 ## Prerequisites
 
