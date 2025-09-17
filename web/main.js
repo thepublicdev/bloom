@@ -5,8 +5,8 @@ let controlWin;
 
 function createWindows() {
   // initial overlay window size & position
-  const startW = 320;
-  const startH = 320;
+  const startW = 520;
+  const startH = 520;
   const startX = 100;
   const startY = 100;
 

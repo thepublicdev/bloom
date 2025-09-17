@@ -130,13 +130,13 @@
       </div>
       
       <div class="row">
-        <button id="startBtn">Start Overlay</button>
+        <button id="startBtn">Start</button>
         <button id="stopBtn" disabled>Stop</button>
       </div>
       
       <div class="row">
         <input id="lockToggle" type="checkbox" checked />
-        <label for="lockToggle">Lock (click-through)</label>
+        <label for="lockToggle">Lock</label>
       </div>
       
       <div class="status" id="status">Select camera and click Start</div>
@@ -220,7 +220,7 @@
       startBtn.disabled = true;
       stopBtn.disabled = false;
       cameraSelect.disabled = true;
-      status.textContent = "Overlay active";
+      status.textContent = "Camera ON";
     });
 
     // Stop overlay
@@ -231,7 +231,7 @@
       startBtn.disabled = false;
       stopBtn.disabled = true;
       cameraSelect.disabled = false;
-      status.textContent = "Overlay stopped";
+      status.textContent = "Camera OFF";
     });
 
     // Send toggle to main
