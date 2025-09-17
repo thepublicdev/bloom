@@ -17,6 +17,12 @@
     },
     "mac": {
       "category": "public.app-category.video",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "This app needs access to the camera to create video overlays.",
+        "NSMicrophoneUsageDescription": "This app may need access to the microphone for video recording features."
+      },
       "target": [
         {
           "target": "dmg",

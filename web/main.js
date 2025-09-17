@@ -22,7 +22,9 @@ function createWindows() {
     hasShadow: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      enableRemoteModule: false,
+      webSecurity: false
     }
   });
 
@@ -39,7 +41,9 @@ function createWindows() {
     focusable: true, // must be focusable to click
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      enableRemoteModule: false,
+      webSecurity: false
     }
   });
 
