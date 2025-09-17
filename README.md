@@ -1,6 +1,6 @@
 # Bloom - Webcam Overlay & Screen Recording App
 
-A modern Electron-based application that provides a circular webcam overlay with drag-and-drop positioning and screen recording capabilities. Perfect for content creators, streamers, and anyone who needs a professional-looking webcam overlay.
+An Open-Source Alternative to [Loom](https://loom.com) that allows you to record your screen with a camera overlay and stores your content locally.
 
 ## Features
 
@@ -9,12 +9,6 @@ A modern Electron-based application that provides a circular webcam overlay with
 - 🎛️ **Camera Selection**: Choose from available cameras via intuitive controls
 - 🔒 **Lock Mode**: Toggle between interactive and click-through modes
 - 📱 **Collapsible Controls**: Clean, minimal control interface
-
-## Prerequisites
-
-- **Node.js** (v16 or higher)
-- **npm** (comes with Node.js)
-- **macOS** (currently optimized for macOS)
 
 ## Setup Instructions
 
@@ -114,57 +108,6 @@ dist/
 - **Drag**: Click and drag the overlay (when unlocked)
 - **Resize**: Drag the resize handle in the bottom-right corner
 - **Lock/Unlock**: Use the control window toggle
-
-## Development
-
-### Project Structure
-
-```
-web/
-├── main.js              # Electron main process
-├── index.html           # Overlay window (webcam display)
-├── controls.html        # Control window interface
-├── package.json         # Dependencies and build config
-├── assets/              # Icons and resources
-│   └── icons.png
-└── build/               # Build configuration
-    └── entitlements.mac.plist
-```
-
-### Key Technologies
-
-- **Electron**: Desktop app framework
-- **MediaDevices API**: Camera and screen capture
-- **MediaRecorder API**: Video recording
-- **IPC**: Inter-process communication between windows
-
-### macOS Permissions
-
-The app includes proper entitlements for:
-- Camera access
-- Microphone access
-- Screen recording
-- File system access
-
-## Troubleshooting
-
-### Camera Not Working
-
-- Ensure camera permissions are granted in System Preferences
-- Try selecting a different camera from the dropdown
-- Restart the application
-
-### Recording Issues
-
-- Check screen recording permissions in System Preferences
-- Ensure audio is selected in the screen sharing picker
-- Verify sufficient disk space for recordings
-
-### Build Errors
-
-- Ensure you're in the `web/` directory
-- Run `npm install` to update dependencies
-- Check that all required files exist in `assets/` and `build/`
 
 ## Contributing
 
