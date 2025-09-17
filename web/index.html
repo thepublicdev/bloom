@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Overlay (Video)</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      -webkit-user-select: none;
+    }
+    #wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+      box-shadow: 0 0 12px rgba(0,0,0,0.45);
+      -webkit-user-drag: none;
+    }
+    .resizer {
+      width: 16px;
+      height: 16px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 50%;
+      position: absolute;
+      right: -8px;
+      bottom: -8px;
+      cursor: se-resize;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <video autoplay playsinline muted></video>
+    <div class="resizer" title="Resize"></div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require("electron");
+    const video = document.querySelector("video");
+    const wrapper = document.getElementById("wrapper");
+    const resizer = document.querySelector(".resizer");
+
+    // track lock state
+    let locked = true;
+    ipcRenderer.on("lock-changed", (_, value) => {
+      locked = !!value;
+      // when unlocked overlay receives mouse events, but we still respect locked flag to disable drag/resize logic
+    });
+
+    // grab webcam
+    async function initWebcam(){
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+      } catch (err) {
+        console.error("webcam error:", err);
+      }
+    }
+    initWebcam();
+
+    // DRAG (moves the actual BrowserWindow)
+    let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
+    wrapper.addEventListener("mousedown", (e) => {
+      if (locked) return;            // disabled while locked
+      if (e.target === resizer) return; // don't start drag when resizing
+      dragging = true;
+      dragOffsetX = e.clientX;
+      dragOffsetY = e.clientY;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      // e.screenX / e.screenY use absolute screen coords
+      const newX = e.screenX - dragOffsetX;
+      const newY = e.screenY - dragOffsetY;
+      ipcRenderer.send("move-window", newX, newY);
+    });
+
+    window.addEventListener("mouseup", () => { dragging = false; });
+
+    // RESIZE (changes BrowserWindow size)
+    let resizing = false, startScreenX=0, startScreenY=0, startW=0, startH=0;
+    resizer.addEventListener("mousedown", (e) => {
+      if (locked) return;
+      e.stopPropagation();
+      e.preventDefault();
+      resizing = true;
+      startScreenX = e.screenX;
+      startScreenY = e.screenY;
+      startW = window.innerWidth;
+      startH = window.innerHeight;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!resizing) return;
+      let newW = Math.max(64, startW + (e.screenX - startScreenX));
+      let newH = Math.max(64, startH + (e.screenY - startScreenY));
+      ipcRenderer.send("resize-window", newW, newH);
+    });
+
+    window.addEventListener("mouseup", () => { resizing = false; });
+
+    // Optional: ensure CSS stays circular on resize
+    ipcRenderer.on("lock-changed", (_, value) => {
+      // no visible change here, but available if you want to show an overlay UI
+    });
+  </script>
+</body>
+</html>

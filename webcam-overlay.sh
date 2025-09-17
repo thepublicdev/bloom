@@ -200,22 +200,23 @@ echo "-------------------------------------------------------------------"
 # - Sets the window size and position (--geometry).
 #
 if [ "$USE_MASK" = true ]; then
-    # Use mask with alphamerge filter
+    # Masked webcam feed with transparency (PNG codec, RGBA)
     ffmpeg -hide_banner -loglevel error \
            -f avfoundation -framerate 30 -video_size $RESOLUTION -i "${CAM_INDEX}:none" \
            -i "$MASK_FILE" \
-           -filter_complex "[0:v][1:v]alphamerge[out]" \
-           -map "[out]" -f matroska -c:v prores_ks - \
+           -filter_complex "[1:v]format=gray,geq=r='p(X,Y)':a='p(X,Y)'[alpha]; \
+                            [0:v][alpha]alphamerge,format=rgba[out]" \
+           -map "[out]" -f matroska -c:v png - \
     | mpv - --vo=gpu --profile=low-latency --untimed \
           --title="Webcam Overlay" \
           --no-border \
           --ontop \
           --geometry="${W}x${H}+${POS_X}+${POS_Y}"
 else
-    # No mask - direct webcam feed
+    # Direct webcam feed (PNG codec, RGBA)
     ffmpeg -hide_banner -loglevel error \
            -f avfoundation -framerate 30 -video_size $RESOLUTION -i "${CAM_INDEX}:none" \
-           -f matroska -c:v prores_ks - \
+           -f matroska -c:v png - \
     | mpv - --vo=gpu --profile=low-latency --untimed \
           --title="Webcam Overlay" \
           --no-border \

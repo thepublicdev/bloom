@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Overlay Controls</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: sans-serif;
+      -webkit-user-select: none;
+    }
+    #box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    input[type="checkbox"] { transform: scale(1.0); }
+    label { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="box">
+    <input id="lockToggle" type="checkbox" checked />
+    <label for="lockToggle">Lock (click-through)</label>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require("electron");
+    const lockToggle = document.getElementById("lockToggle");
+
+    // Send toggle to main
+    lockToggle.addEventListener("change", () => {
+      ipcRenderer.send("set-lock", lockToggle.checked);
+    });
+
+    // Update UI when main broadcasts change (keeps them in sync)
+    ipcRenderer.on("lock-changed", (_, locked) => {
+      lockToggle.checked = !!locked;
+    });
+
+    // Make clicks inside this control window not pass-through (it is focusable by default)
+    // Nothing else needed here because this small window is clickable by design.
+  </script>
+</body>
+</html>
