@@ -5,6 +5,8 @@ const {
   desktopCapturer,
   dialog,
   session,
+  Tray,
+  Menu,
 } = require("electron");
 const fs = require("fs");
 const path = require("path");
@@ -215,6 +217,30 @@ function createWindows() {
     if (controlWin && !controlWin.isDestroyed()) controlWin.close();
     overlayWin = null;
   });
+
+  // Create tray icon
+  const iconPath = path.join(__dirname, "assets", "icons.png");
+  tray = new Tray(iconPath);
+
+  // Optional: Set a tooltip for the tray icon
+  tray.setToolTip("Bloom");
+
+  // Optional: Create a context menu for the tray icon
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Open",
+      click: () => {
+        if (controlWin && !controlWin.isDestroyed()) {
+          controlWin.show();
+        }
+        if (overlayWin && !overlayWin.isDestroyed()) {
+          overlayWin.show();
+        }
+      },
+    },
+    { label: "Quit", click: () => app.quit() },
+  ]);
+  tray.setContextMenu(contextMenu);
 }
 
 app.whenReady().then(createWindows);
