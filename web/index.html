@@ -46,7 +46,7 @@
   </div>
 
   <script>
-    const { ipcRenderer } = require("electron");
+    const { ipcRenderer, desktopCapturer } = require("electron");
     const video = document.querySelector("video");
     const wrapper = document.getElementById("wrapper");
     const resizer = document.querySelector(".resizer");
@@ -111,8 +111,9 @@
     // Start screen recording
     ipcRenderer.on("start-screen-recording", async () => {
       try {
-        const { desktopCapturer } = require("electron");
+
         
+
         // Get available screen sources
         const inputSources = await desktopCapturer.getSources({
           types: ['screen'],
