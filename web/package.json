@@ -1,5 +1,5 @@
 {
-  "name": "webcam-overlay",
+  "name": "Bloom",
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
@@ -10,8 +10,8 @@
     "pack": "electron-builder --dir"
   },
   "build": {
-    "appId": "com.vaneyck.webcam-overlay",
-    "productName": "Webcam Overlay",
+    "appId": "com.vanks.bloom",
+    "productName": "Bloom",
     "directories": {
       "output": "dist"
     },
@@ -41,7 +41,7 @@
           ]
         }
       ],
-      "icon": "assets/icon.icns"
+      "icon": "assets/icon.png"
     },
     "files": [
       "**/*",
