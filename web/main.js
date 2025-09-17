@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, desktopCapturer, dialog, session } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -7,6 +7,17 @@ let overlayWin;
 let controlWin;
 
 function createWindows() {
+  // Set up display media request handler for screen recording
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
+      // Grant access to the first screen found.
+      callback({ video: sources[0], audio: 'loopback' });
+    }).catch((err) => {
+      console.error('Error getting screen sources:', err);
+      callback({});
+    });
+  }, { useSystemPicker: true });
+
   // initial overlay window size & position
   const startW = 520;
   const startH = 520;
@@ -130,6 +141,17 @@ function createWindows() {
   ipcMain.on("stop-recording", () => {
     overlayWin.webContents.send("stop-screen-recording");
     controlWin.webContents.send("recording-status", false);
+  });
+
+  // Handle when recording is ended by user via system controls
+  ipcMain.on("recording-ended-by-user", () => {
+    controlWin.webContents.send("recording-status", false);
+    controlWin.webContents.send("recording-ended-by-user");
+  });
+
+  // Handle recording errors from renderer
+  ipcMain.on("recording-error", (_, error) => {
+    controlWin.webContents.send("recording-error", error);
   });
 
   // Handle recording file saved notification

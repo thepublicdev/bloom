@@ -46,7 +46,7 @@
   </div>
 
   <script>
-    const { ipcRenderer, desktopCapturer } = require("electron");
+    const { ipcRenderer } = require("electron");
     const video = document.querySelector("video");
     const wrapper = document.getElementById("wrapper");
     const resizer = document.querySelector(".resizer");
@@ -111,47 +111,78 @@
     // Start screen recording
     ipcRenderer.on("start-screen-recording", async () => {
       try {
-
-        
-
-        // Get available screen sources
-        const inputSources = await desktopCapturer.getSources({
-          types: ['screen'],
-          thumbnailSize: { width: 1920, height: 1080 }
-        });
-
-        if (inputSources.length === 0) {
-          console.error("No screen sources available");
-          return;
-        }
-
-        // Use the first (primary) screen
-        const primaryScreen = inputSources[0];
-
-        // Get screen stream
-        screenStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: primaryScreen.id
-            }
-          },
+        // Use modern getDisplayMedia API with system picker
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: primaryScreen.id,
-              maxWidth: 1920,
-              maxHeight: 1080,
-              maxFrameRate: 30
-            }
+            width: { max: 1920 },
+            height: { max: 1080 },
+            frameRate: { max: 30 }
+          },
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            sampleRate: 48000,
+            channelCount: 2
           }
         });
 
-        // Create MediaRecorder
+        // Log captured tracks for debugging
+        const videoTracks = screenStream.getVideoTracks();
+        const audioTracks = screenStream.getAudioTracks();
+        console.log(`Captured ${videoTracks.length} video track(s) and ${audioTracks.length} audio track(s)`);
+        
+        if (audioTracks.length > 0) {
+          console.log('Audio track settings:', audioTracks[0].getSettings());
+        } else {
+          console.warn('No audio tracks captured from screen. This could be because:');
+          console.warn('1. Audio was not selected in the system picker');
+          console.warn('2. The selected screen source doesn\'t have audio');
+          console.warn('3. Audio permissions are not granted');
+        }
+
+        // If no screen audio, optionally try to add microphone audio
+        let combinedStream = screenStream;
+        if (audioTracks.length === 0) {
+          try {
+            console.log('Attempting to add microphone audio as fallback...');
+            const micStream = await navigator.mediaDevices.getUserMedia({ 
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              } 
+            });
+            
+            // Combine video from screen with audio from microphone
+            const combinedTracks = [
+              ...screenStream.getVideoTracks(),
+              ...micStream.getAudioTracks()
+            ];
+            
+            combinedStream = new MediaStream(combinedTracks);
+            console.log('Added microphone audio as fallback');
+          } catch (micError) {
+            console.warn('Could not add microphone audio:', micError.message);
+            // Continue with screen-only recording
+          }
+        }
+
+        // Create MediaRecorder with explicit audio/video codecs
         recordedChunks = [];
-        mediaRecorder = new MediaRecorder(screenStream, {
-          mimeType: 'video/webm; codecs=vp9'
-        });
+        const options = {
+          mimeType: 'video/webm; codecs=vp9,opus'
+        };
+        
+        // Fallback if VP9 with Opus isn't supported
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm; codecs=vp8,vorbis';
+          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options.mimeType = 'video/webm';
+          }
+        }
+        
+        mediaRecorder = new MediaRecorder(combinedStream, options);
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
@@ -163,12 +194,21 @@
           saveRecording();
         };
 
+        // Handle when user stops sharing via browser controls
+        screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+          ipcRenderer.send("recording-ended-by-user");
+        });
+
         // Start recording
         mediaRecorder.start(1000); // Collect data every second
         console.log("Screen recording started");
 
       } catch (err) {
         console.error("Error starting screen recording:", err);
+        ipcRenderer.send("recording-error", err.message);
       }
     });
 

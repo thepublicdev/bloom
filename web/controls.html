@@ -310,6 +310,19 @@
       stopRecordBtn.disabled = true;
     });
 
+    // Handle when user ends recording via system controls
+    ipcRenderer.on("recording-ended-by-user", () => {
+      status.textContent = "Recording stopped by user";
+      isRecording = false;
+      recordBtn.disabled = false;
+      stopRecordBtn.disabled = true;
+      setTimeout(() => {
+        if (isOverlayActive) {
+          status.textContent = "Overlay active";
+        }
+      }, 2000);
+    });
+
     // Load cameras when page loads
     loadCameras();
 
