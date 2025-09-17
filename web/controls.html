@@ -135,6 +135,11 @@
       </div>
       
       <div class="row">
+        <button id="recordBtn" disabled>🔴 Record</button>
+        <button id="stopRecordBtn" disabled>⏹ Stop Recording</button>
+      </div>
+      
+      <div class="row">
         <input id="lockToggle" type="checkbox" checked />
         <label for="lockToggle">Lock</label>
       </div>
@@ -149,12 +154,15 @@
     const cameraSelect = document.getElementById("cameraSelect");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
+    const recordBtn = document.getElementById("recordBtn");
+    const stopRecordBtn = document.getElementById("stopRecordBtn");
     const status = document.getElementById("status");
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
     
     let isOverlayActive = false;
     let isCollapsed = false;
+    let isRecording = false;
 
     // Toggle collapse/expand
     toggleBtn.addEventListener("click", () => {
@@ -163,14 +171,12 @@
         box.classList.add("collapsed");
         toggleBtn.textContent = "▶";
         toggleBtn.title = "Expand controls";
-        // Notify main process to resize window
         ipcRenderer.send("resize-controls", 40, 40);
       } else {
         box.classList.remove("collapsed");
         toggleBtn.textContent = "⚙";
         toggleBtn.title = "Collapse controls";
-        // Notify main process to resize window
-        ipcRenderer.send("resize-controls", 240, 140);
+        ipcRenderer.send("resize-controls", 240, 160);
       }
     });
 
@@ -213,14 +219,14 @@
         return;
       }
       
-      // Send camera selection to overlay window
       ipcRenderer.send("start-overlay", selectedCamera);
       
       isOverlayActive = true;
       startBtn.disabled = true;
       stopBtn.disabled = false;
+      recordBtn.disabled = false;
       cameraSelect.disabled = true;
-      status.textContent = "Camera ON";
+      status.textContent = "Overlay active";
     });
 
     // Stop overlay
@@ -230,8 +236,30 @@
       isOverlayActive = false;
       startBtn.disabled = false;
       stopBtn.disabled = true;
+      recordBtn.disabled = true;
+      stopRecordBtn.disabled = true;
       cameraSelect.disabled = false;
-      status.textContent = "Camera OFF";
+      status.textContent = "Overlay stopped";
+    });
+
+    // Start recording
+    recordBtn.addEventListener("click", () => {
+      ipcRenderer.send("start-recording");
+      
+      isRecording = true;
+      recordBtn.disabled = true;
+      stopRecordBtn.disabled = false;
+      status.textContent = "Recording...";
+    });
+
+    // Stop recording
+    stopRecordBtn.addEventListener("click", () => {
+      ipcRenderer.send("stop-recording");
+      
+      isRecording = false;
+      recordBtn.disabled = false;
+      stopRecordBtn.disabled = true;
+      status.textContent = "Recording saved";
     });
 
     // Send toggle to main
@@ -239,7 +267,7 @@
       ipcRenderer.send("set-lock", lockToggle.checked);
     });
 
-    // Update UI when main broadcasts change (keeps them in sync)
+    // Update UI when main broadcasts change
     ipcRenderer.on("lock-changed", (_, locked) => {
       lockToggle.checked = !!locked;
     });
@@ -249,8 +277,37 @@
       isOverlayActive = active;
       startBtn.disabled = active;
       stopBtn.disabled = !active;
+      recordBtn.disabled = !active;
       cameraSelect.disabled = active;
       status.textContent = active ? "Overlay active" : "Overlay stopped";
+    });
+
+    // Handle recording status updates
+    ipcRenderer.on("recording-status", (_, recording) => {
+      isRecording = recording;
+      recordBtn.disabled = recording;
+      stopRecordBtn.disabled = !recording;
+      if (recording) {
+        status.textContent = "Recording screen...";
+      }
+    });
+
+    // Handle recording saved notification
+    ipcRenderer.on("recording-saved", (_, filePath) => {
+      status.textContent = `Recording saved to Desktop`;
+      setTimeout(() => {
+        if (isOverlayActive) {
+          status.textContent = "Overlay active";
+        }
+      }, 3000);
+    });
+
+    // Handle recording errors
+    ipcRenderer.on("recording-error", (_, error) => {
+      status.textContent = `Recording error: ${error}`;
+      isRecording = false;
+      recordBtn.disabled = false;
+      stopRecordBtn.disabled = true;
     });
 
     // Load cameras when page loads

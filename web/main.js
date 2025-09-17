@@ -1,4 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require("electron");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 
 let overlayWin;
 let controlWin;
@@ -33,7 +36,7 @@ function createWindows() {
     x: startX + startW - 240, // Position to extend left from overlay
     y: startY - 10, // Slightly above overlay
     width: 240,
-    height: 140,
+    height: 160, // Increased height for recording buttons
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -109,6 +112,55 @@ function createWindows() {
   ipcMain.on("stop-overlay", () => {
     overlayWin.webContents.send("stop-camera");
     controlWin.webContents.send("overlay-status", false);
+  });
+
+  // Start screen recording
+  ipcMain.on("start-recording", async () => {
+    try {
+      // Send recording command to overlay window (which has access to desktopCapturer)
+      overlayWin.webContents.send("start-screen-recording");
+      controlWin.webContents.send("recording-status", true);
+    } catch (err) {
+      console.error("Error starting recording:", err);
+      controlWin.webContents.send("recording-error", err.message);
+    }
+  });
+
+  // Stop screen recording
+  ipcMain.on("stop-recording", () => {
+    overlayWin.webContents.send("stop-screen-recording");
+    controlWin.webContents.send("recording-status", false);
+  });
+
+  // Handle recording file saved notification
+  ipcMain.on("recording-saved", (_, filePath) => {
+    controlWin.webContents.send("recording-saved", filePath);
+  });
+
+  // Save recording file
+  ipcMain.on("save-recording", async (_, data) => {
+    try {
+      const { buffer, filename } = data;
+      
+      // Save to Desktop by default
+      const desktopPath = path.join(os.homedir(), "Desktop");
+      const filePath = path.join(desktopPath, filename);
+      
+      // Convert array back to Buffer
+      const fileBuffer = Buffer.from(buffer);
+      
+      // Write file
+      fs.writeFileSync(filePath, fileBuffer);
+      
+      console.log(`Recording saved to: ${filePath}`);
+      
+      // Notify control window
+      controlWin.webContents.send("recording-saved", filePath);
+      
+    } catch (err) {
+      console.error("Error saving recording file:", err);
+      controlWin.webContents.send("recording-error", err.message);
+    }
   });
 
   // If overlay is closed, close control window too

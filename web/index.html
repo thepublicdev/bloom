@@ -103,6 +103,117 @@
       stopWebcam();
     });
 
+    // Screen recording functionality
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let screenStream = null;
+
+    // Start screen recording
+    ipcRenderer.on("start-screen-recording", async () => {
+      try {
+        const { desktopCapturer } = require("electron");
+        
+        // Get available screen sources
+        const inputSources = await desktopCapturer.getSources({
+          types: ['screen'],
+          thumbnailSize: { width: 1920, height: 1080 }
+        });
+
+        if (inputSources.length === 0) {
+          console.error("No screen sources available");
+          return;
+        }
+
+        // Use the first (primary) screen
+        const primaryScreen = inputSources[0];
+
+        // Get screen stream
+        screenStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: primaryScreen.id
+            }
+          },
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: primaryScreen.id,
+              maxWidth: 1920,
+              maxHeight: 1080,
+              maxFrameRate: 30
+            }
+          }
+        });
+
+        // Create MediaRecorder
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(screenStream, {
+          mimeType: 'video/webm; codecs=vp9'
+        });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          saveRecording();
+        };
+
+        // Start recording
+        mediaRecorder.start(1000); // Collect data every second
+        console.log("Screen recording started");
+
+      } catch (err) {
+        console.error("Error starting screen recording:", err);
+      }
+    });
+
+    // Stop screen recording
+    ipcRenderer.on("stop-screen-recording", () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        console.log("Screen recording stopped");
+      }
+      
+      if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+        screenStream = null;
+      }
+    });
+
+    // Save the recorded video
+    async function saveRecording() {
+      if (recordedChunks.length === 0) {
+        console.error("No recorded data to save");
+        return;
+      }
+
+      try {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const buffer = await blob.arrayBuffer();
+        const { ipcRenderer: ipc } = require("electron");
+        
+        // Generate filename with timestamp
+        const now = new Date();
+        const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `screen-recording-${timestamp}.webm`;
+        
+        // Send to main process to save file
+        ipc.send("save-recording", {
+          buffer: Array.from(new Uint8Array(buffer)),
+          filename: filename
+        });
+
+        console.log(`Recording saved as ${filename}`);
+        
+      } catch (err) {
+        console.error("Error saving recording:", err);
+      }
+    }
+
     // DRAG (moves the actual BrowserWindow)
     let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
     wrapper.addEventListener("mousedown", (e) => {
