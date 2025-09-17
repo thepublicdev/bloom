@@ -111,7 +111,8 @@ echo
 echo "🎨 Choose an overlay shape:"
 echo "  1) Circle"
 echo "  2) Rounded Square"
-read -p "Enter your choice (1 or 2): " shape_choice
+echo "  3) No Mask (Full Rectangle)"
+read -p "Enter your choice (1, 2, or 3): " shape_choice
 
 
 # 4. Configure Resolution and Position.
@@ -146,6 +147,7 @@ case $shape_choice in
         SHAPE_NAME="Circle"
         # Use ImageMagick's 'convert' to draw a white circle on a transparent background.
         convert -size ${W}x${H} xc:transparent -fill white -draw "circle $((W/2)),$((H/2)) $((W/2)),0" "$MASK_FILE"
+        USE_MASK=true
         ;;
     2)
         SHAPE_NAME="Rounded Square"
@@ -153,6 +155,12 @@ case $shape_choice in
         RADIUS=$(( $(($W < $H ? $W : $H)) / 5 ))
         # Use ImageMagick to draw a white rounded rectangle.
         convert -size ${W}x${H} xc:transparent -fill white -draw "roundrectangle 0,0,${W},${H},${RADIUS},${RADIUS}" "$MASK_FILE"
+        USE_MASK=true
+        ;;
+    3)
+        SHAPE_NAME="No Mask (Full Rectangle)"
+        # No mask needed - will show full webcam feed
+        USE_MASK=false
         ;;
     *)
         echo "❌ Invalid shape choice. Exiting."
@@ -160,7 +168,7 @@ case $shape_choice in
         ;;
 esac
 
-if [ ! -f "$MASK_FILE" ]; then
+if [ "$USE_MASK" = true ] && [ ! -f "$MASK_FILE" ]; then
     echo "❌ Failed to create the mask file. Exiting."
     exit 1
 fi
@@ -181,8 +189,8 @@ echo "-------------------------------------------------------------------"
 #
 # FFmpeg part:
 # - Grabs the webcam feed (-f avfoundation).
-# - Takes the mask image as a second input (-i "$MASK_FILE").
-# - Merges the webcam's video with the mask's alpha channel (-filter_complex alphamerge).
+# - Takes the mask image as a second input (if using mask).
+# - Merges the webcam's video with the mask's alpha channel (if using mask).
 # - Outputs the result to standard output (-f matroska -).
 #
 # MPV part:
@@ -191,13 +199,26 @@ echo "-------------------------------------------------------------------"
 # - Displays the window without borders (--no-border) and on top of all other windows (--ontop).
 # - Sets the window size and position (--geometry).
 #
-ffmpeg -hide_banner -loglevel error \
-       -f avfoundation -framerate 30 -video_size $RESOLUTION -i "${CAM_INDEX}:none" \
-       -i "$MASK_FILE" \
-       -filter_complex "[0:v][1:v]alphamerge[out]" \
-       -map "[out]" -f matroska -c:v prores_ks - \
-| mpv - --vo=gpu --profile=low-latency --untimed \
-      --title="Webcam Overlay" \
-      --no-border \
-      --ontop \
-      --geometry="${W}x${H}+${POS_X}+${POS_Y}"
+if [ "$USE_MASK" = true ]; then
+    # Use mask with alphamerge filter
+    ffmpeg -hide_banner -loglevel error \
+           -f avfoundation -framerate 30 -video_size $RESOLUTION -i "${CAM_INDEX}:none" \
+           -i "$MASK_FILE" \
+           -filter_complex "[0:v][1:v]alphamerge[out]" \
+           -map "[out]" -f matroska -c:v prores_ks - \
+    | mpv - --vo=gpu --profile=low-latency --untimed \
+          --title="Webcam Overlay" \
+          --no-border \
+          --ontop \
+          --geometry="${W}x${H}+${POS_X}+${POS_Y}"
+else
+    # No mask - direct webcam feed
+    ffmpeg -hide_banner -loglevel error \
+           -f avfoundation -framerate 30 -video_size $RESOLUTION -i "${CAM_INDEX}:none" \
+           -f matroska -c:v prores_ks - \
+    | mpv - --vo=gpu --profile=low-latency --untimed \
+          --title="Webcam Overlay" \
+          --no-border \
+          --ontop \
+          --geometry="${W}x${H}+${POS_X}+${POS_Y}"
+fi
