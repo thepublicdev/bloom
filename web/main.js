@@ -1,22 +1,36 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, dialog, session } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  desktopCapturer,
+  dialog,
+  session,
+} = require("electron");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
 let overlayWin;
 let controlWin;
+let tray = null;
 
 function createWindows() {
   // Set up display media request handler for screen recording
-  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
-    desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
-      // Grant access to the first screen found.
-      callback({ video: sources[0], audio: 'loopback' });
-    }).catch((err) => {
-      console.error('Error getting screen sources:', err);
-      callback({});
-    });
-  }, { useSystemPicker: true });
+  session.defaultSession.setDisplayMediaRequestHandler(
+    (request, callback) => {
+      desktopCapturer
+        .getSources({ types: ["screen"] })
+        .then((sources) => {
+          // Grant access to the first screen found.
+          callback({ video: sources[0], audio: "loopback" });
+        })
+        .catch((err) => {
+          console.error("Error getting screen sources:", err);
+          callback({});
+        });
+    },
+    { useSystemPicker: true }
+  );
 
   // initial overlay window size & position
   const startW = 520;
@@ -38,8 +52,8 @@ function createWindows() {
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: false,
-      webSecurity: false
-    }
+      webSecurity: false,
+    },
   });
 
   // small clickable control window (checkbox)
@@ -57,8 +71,8 @@ function createWindows() {
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: false,
-      webSecurity: false
-    }
+      webSecurity: false,
+    },
   });
 
   // Make sure control window stays above overlay
@@ -85,7 +99,11 @@ function createWindows() {
     // keep control window positioned to the left of overlay
     const b = overlayWin.getBounds();
     const controlBounds = controlWin.getBounds();
-    controlWin.setPosition(b.x + b.width - controlBounds.width, b.y - 10, false);
+    controlWin.setPosition(
+      b.x + b.width - controlBounds.width,
+      b.y - 10,
+      false
+    );
   });
 
   // Resize overlay window (called from overlay renderer)
@@ -93,7 +111,11 @@ function createWindows() {
     overlayWin.setSize(Math.round(w), Math.round(h));
     const b = overlayWin.getBounds();
     const controlBounds = controlWin.getBounds();
-    controlWin.setPosition(b.x + b.width - controlBounds.width, b.y - 10, false);
+    controlWin.setPosition(
+      b.x + b.width - controlBounds.width,
+      b.y - 10,
+      false
+    );
   });
 
   // Resize controls window (called from controls when collapsing/expanding)
@@ -101,7 +123,11 @@ function createWindows() {
     controlWin.setSize(Math.round(w), Math.round(h));
     // Reposition to maintain alignment with overlay
     const overlayBounds = overlayWin.getBounds();
-    controlWin.setPosition(overlayBounds.x + overlayBounds.width - w, overlayBounds.y - 10, false);
+    controlWin.setPosition(
+      overlayBounds.x + overlayBounds.width - w,
+      overlayBounds.y - 10,
+      false
+    );
   });
 
   // Lock toggle from control window
@@ -163,22 +189,21 @@ function createWindows() {
   ipcMain.on("save-recording", async (_, data) => {
     try {
       const { buffer, filename } = data;
-      
+
       // Save to Desktop by default
       const desktopPath = path.join(os.homedir(), "Desktop");
       const filePath = path.join(desktopPath, filename);
-      
+
       // Convert array back to Buffer
       const fileBuffer = Buffer.from(buffer);
-      
+
       // Write file
       fs.writeFileSync(filePath, fileBuffer);
-      
+
       console.log(`Recording saved to: ${filePath}`);
-      
+
       // Notify control window
       controlWin.webContents.send("recording-saved", filePath);
-      
     } catch (err) {
       console.error("Error saving recording file:", err);
       controlWin.webContents.send("recording-error", err.message);
