@@ -28,10 +28,10 @@ function createWindows() {
 
   // small clickable control window (checkbox)
   controlWin = new BrowserWindow({
-    x: startX + 10,
-    y: startY + 10,
-    width: 160,
-    height: 48,
+    x: startX + startW - 240, // Position to extend left from overlay
+    y: startY - 10, // Slightly above overlay
+    width: 240,
+    height: 140,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -64,16 +64,26 @@ function createWindows() {
   // Move overlay window (called from overlay renderer during dragging)
   ipcMain.on("move-window", (_, x, y) => {
     overlayWin.setPosition(Math.round(x), Math.round(y));
-    // keep control window near overlay (10px offset)
+    // keep control window positioned to the left of overlay
     const b = overlayWin.getBounds();
-    controlWin.setPosition(b.x + 10, b.y + 10, false);
+    const controlBounds = controlWin.getBounds();
+    controlWin.setPosition(b.x + b.width - controlBounds.width, b.y - 10, false);
   });
 
   // Resize overlay window (called from overlay renderer)
   ipcMain.on("resize-window", (_, w, h) => {
     overlayWin.setSize(Math.round(w), Math.round(h));
     const b = overlayWin.getBounds();
-    controlWin.setPosition(b.x + 10, b.y + 10, false);
+    const controlBounds = controlWin.getBounds();
+    controlWin.setPosition(b.x + b.width - controlBounds.width, b.y - 10, false);
+  });
+
+  // Resize controls window (called from controls when collapsing/expanding)
+  ipcMain.on("resize-controls", (_, w, h) => {
+    controlWin.setSize(Math.round(w), Math.round(h));
+    // Reposition to maintain alignment with overlay
+    const overlayBounds = overlayWin.getBounds();
+    controlWin.setPosition(overlayBounds.x + overlayBounds.width - w, overlayBounds.y - 10, false);
   });
 
   // Lock toggle from control window
@@ -83,6 +93,18 @@ function createWindows() {
     // broadcast new lock state to renderers
     overlayWin.webContents.send("lock-changed", !!locked);
     controlWin.webContents.send("lock-changed", !!locked);
+  });
+
+  // Start overlay with selected camera
+  ipcMain.on("start-overlay", (_, cameraId) => {
+    overlayWin.webContents.send("start-camera", cameraId);
+    controlWin.webContents.send("overlay-status", true);
+  });
+
+  // Stop overlay
+  ipcMain.on("stop-overlay", () => {
+    overlayWin.webContents.send("stop-camera");
+    controlWin.webContents.send("overlay-status", false);
   });
 
   // If overlay is closed, close control window too

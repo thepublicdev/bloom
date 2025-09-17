@@ -59,15 +59,49 @@
     });
 
     // grab webcam
-    async function initWebcam(){
+    let currentStream = null;
+    
+    async function initWebcam(deviceId = null){
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        // Stop current stream if exists
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+        
+        const constraints = { 
+          video: deviceId ? { deviceId: { exact: deviceId } } : true, 
+          audio: false 
+        };
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
+        currentStream = stream;
       } catch (err) {
         console.error("webcam error:", err);
+        video.srcObject = null;
+        currentStream = null;
       }
     }
-    initWebcam();
+    
+    function stopWebcam() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+      }
+      video.srcObject = null;
+    }
+    
+    // Don't auto-start camera anymore
+    // initWebcam();
+
+    // Listen for camera start/stop commands from controls
+    ipcRenderer.on("start-camera", (_, cameraId) => {
+      initWebcam(cameraId);
+    });
+    
+    ipcRenderer.on("stop-camera", () => {
+      stopWebcam();
+    });
 
     // DRAG (moves the actual BrowserWindow)
     let dragging = false, dragOffsetX = 0, dragOffsetY = 0;

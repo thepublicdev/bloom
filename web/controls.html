@@ -13,27 +13,226 @@
     }
     #box {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 8px;
-      padding: 6px 8px;
-      background: rgba(0,0,0,0.6);
+      padding: 12px;
+      background: rgba(0,0,0,0.8);
       color: white;
       border-radius: 8px;
       font-size: 13px;
+      min-width: 200px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    #box.collapsed {
+      min-width: auto;
+      width: 40px;
+      height: 40px;
+      padding: 8px;
+    }
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    #toggleBtn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    #toggleBtn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    #content {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #box.collapsed #content {
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+      position: absolute;
+      visibility: hidden;
+    }
+    #title {
+      font-weight: bold;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    #box.collapsed #title {
+      display: none;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     input[type="checkbox"] { transform: scale(1.0); }
     label { cursor: pointer; }
+    select {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      flex: 1;
+    }
+    select option {
+      background: #333;
+      color: white;
+    }
+    button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0056CC;
+    }
+    button:disabled {
+      background: rgba(255,255,255,0.3);
+      cursor: not-allowed;
+    }
+    .status {
+      font-size: 11px;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
   <div id="box">
-    <input id="lockToggle" type="checkbox" checked />
-    <label for="lockToggle">Lock (click-through)</label>
+    <div id="header">
+      <div id="title">Webcam Controls</div>
+      <button id="toggleBtn" title="Toggle controls">⚙</button>
+    </div>
+    
+    <div id="content">
+      <div class="row">
+        <label for="cameraSelect">Camera:</label>
+        <select id="cameraSelect">
+          <option value="">Loading cameras...</option>
+        </select>
+      </div>
+      
+      <div class="row">
+        <button id="startBtn">Start Overlay</button>
+        <button id="stopBtn" disabled>Stop</button>
+      </div>
+      
+      <div class="row">
+        <input id="lockToggle" type="checkbox" checked />
+        <label for="lockToggle">Lock (click-through)</label>
+      </div>
+      
+      <div class="status" id="status">Select camera and click Start</div>
+    </div>
   </div>
 
   <script>
     const { ipcRenderer } = require("electron");
     const lockToggle = document.getElementById("lockToggle");
+    const cameraSelect = document.getElementById("cameraSelect");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const status = document.getElementById("status");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const box = document.getElementById("box");
+    
+    let isOverlayActive = false;
+    let isCollapsed = false;
+
+    // Toggle collapse/expand
+    toggleBtn.addEventListener("click", () => {
+      isCollapsed = !isCollapsed;
+      if (isCollapsed) {
+        box.classList.add("collapsed");
+        toggleBtn.textContent = "▶";
+        toggleBtn.title = "Expand controls";
+        // Notify main process to resize window
+        ipcRenderer.send("resize-controls", 40, 40);
+      } else {
+        box.classList.remove("collapsed");
+        toggleBtn.textContent = "⚙";
+        toggleBtn.title = "Collapse controls";
+        // Notify main process to resize window
+        ipcRenderer.send("resize-controls", 240, 140);
+      }
+    });
+
+    // Load available cameras
+    async function loadCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        cameraSelect.innerHTML = '';
+        if (videoDevices.length === 0) {
+          cameraSelect.innerHTML = '<option value="">No cameras found</option>';
+          startBtn.disabled = true;
+          status.textContent = "No cameras available";
+          return;
+        }
+        
+        videoDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `Camera ${index + 1}`;
+          cameraSelect.appendChild(option);
+        });
+        
+        status.textContent = "Select camera and click Start";
+        startBtn.disabled = false;
+      } catch (err) {
+        console.error("Error loading cameras:", err);
+        cameraSelect.innerHTML = '<option value="">Error loading cameras</option>';
+        status.textContent = "Error accessing cameras";
+        startBtn.disabled = true;
+      }
+    }
+
+    // Start overlay
+    startBtn.addEventListener("click", () => {
+      const selectedCamera = cameraSelect.value;
+      if (!selectedCamera) {
+        status.textContent = "Please select a camera";
+        return;
+      }
+      
+      // Send camera selection to overlay window
+      ipcRenderer.send("start-overlay", selectedCamera);
+      
+      isOverlayActive = true;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      cameraSelect.disabled = true;
+      status.textContent = "Overlay active";
+    });
+
+    // Stop overlay
+    stopBtn.addEventListener("click", () => {
+      ipcRenderer.send("stop-overlay");
+      
+      isOverlayActive = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      cameraSelect.disabled = false;
+      status.textContent = "Overlay stopped";
+    });
 
     // Send toggle to main
     lockToggle.addEventListener("change", () => {
@@ -45,8 +244,20 @@
       lockToggle.checked = !!locked;
     });
 
-    // Make clicks inside this control window not pass-through (it is focusable by default)
-    // Nothing else needed here because this small window is clickable by design.
+    // Handle overlay status updates from main process
+    ipcRenderer.on("overlay-status", (_, active) => {
+      isOverlayActive = active;
+      startBtn.disabled = active;
+      stopBtn.disabled = !active;
+      cameraSelect.disabled = active;
+      status.textContent = active ? "Overlay active" : "Overlay stopped";
+    });
+
+    // Load cameras when page loads
+    loadCameras();
+
+    // Reload cameras when devices change
+    navigator.mediaDevices.addEventListener('devicechange', loadCameras);
   </script>
 </body>
 </html>
