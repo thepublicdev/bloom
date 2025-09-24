@@ -8,50 +8,51 @@
       margin: 0;
       padding: 0;
       background: transparent;
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-user-select: none;
     }
     #box {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px;
-      background: rgba(0,0,0,0.8);
-      color: white;
-      border-radius: 8px;
-      font-size: 13px;
-      min-width: 200px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 16px;
+      min-width: 280px;
       position: relative;
       transition: all 0.3s ease;
+      color: #333;
     }
     #box.collapsed {
       min-width: auto;
-      width: 40px;
-      height: 40px;
-      padding: 8px;
+      width: 48px;
+      height: 48px;
+      padding: 12px;
+      border-radius: 50%;
     }
     #header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 16px;
     }
     #toggleBtn {
-      background: rgba(255,255,255,0.2);
+      background: rgba(0, 0, 0, 0.05);
       border: none;
-      color: white;
+      color: #666;
       width: 24px;
       height: 24px;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
     #toggleBtn:hover {
-      background: rgba(255,255,255,0.3);
+      background: rgba(0, 0, 0, 0.1);
+      color: #333;
     }
     #content {
       transition: opacity 0.3s ease, transform 0.3s ease;
@@ -63,99 +64,376 @@
       position: absolute;
       visibility: hidden;
     }
-    #title {
-      font-weight: bold;
-      font-size: 12px;
-      opacity: 0.9;
+    #box.collapsed #header {
+      margin: 0;
+      justify-content: center;
     }
-    #box.collapsed #title {
-      display: none;
+    .media-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
     }
-    .row {
+    .media-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .camera-btn {
+      background: #f0f0f0;
+      color: #666;
+    }
+    .camera-btn.active {
+      background: #007AFF;
+      color: white;
+    }
+    .camera-btn:hover {
+      background: #e0e0e0;
+    }
+    .camera-btn.active:hover {
+      background: #0056CC;
+    }
+    .screenshot-btn {
+      background: #f0f0f0;
+      color: #666;
+    }
+    .screenshot-btn:hover {
+      background: #e0e0e0;
+    }
+    .home-btn {
+      background: #f0f0f0;
+      color: #666;
+    }
+    .home-btn:hover {
+      background: #e0e0e0;
+    }
+    .screen-mode {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 12px;
+    }
+    .screen-icon {
+      font-size: 16px;
+    }
+    .screen-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+    }
+    .camera-section {
+      margin-bottom: 16px;
+    }
+    .camera-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .camera-icon {
+      font-size: 16px;
+      color: #666;
+    }
+    .camera-status {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+    .camera-status.off {
+      color: #999;
+    }
+    .camera-toggle {
+      margin-left: auto;
+      width: 48px;
+      height: 24px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .camera-toggle.off {
+      background: #ddd;
+    }
+    .camera-toggle.on {
+      background: #007AFF;
+    }
+    .camera-toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      top: 2px;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .camera-toggle.off::after {
+      left: 2px;
+    }
+    .camera-toggle.on::after {
+      left: 26px;
+    }
+    .camera-dropdown {
+      margin-top: 8px;
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .camera-dropdown:hover {
+      border-color: #007AFF;
+    }
+    .camera-dropdown:focus {
+      outline: none;
+      border-color: #007AFF;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+    .camera-dropdown option {
+      padding: 8px;
+    }
+    .microphone-section {
+      margin-bottom: 16px;
+    }
+    .microphone-header {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    input[type="checkbox"] { transform: scale(1.0); }
-    label { cursor: pointer; }
-    select {
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 4px;
-      padding: 4px 8px;
+    .microphone-icon {
+      font-size: 16px;
+      color: #007AFF;
+    }
+    .microphone-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+    .microphone-status {
+      margin-left: auto;
       font-size: 12px;
+      color: #007AFF;
+      background: rgba(0, 122, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    .recording-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .record-btn {
+      width: 64px;
+      height: 64px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.2s;
+      background: #ff4757;
+      color: white;
+      position: relative;
+    }
+    .record-btn:hover {
+      background: #ff3838;
+      transform: scale(1.05);
+    }
+    .record-btn.recording {
+      background: #ff4757;
+      animation: pulse 2s infinite;
+    }
+    .record-btn.recording::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 2px solid #ff4757;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: ripple 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes ripple {
+      0% { transform: scale(1); opacity: 0.3; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+    .recording-time {
+      text-align: center;
+      font-size: 12px;
+      color: #ff4757;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    .lock-section {
+      margin-bottom: 16px;
+    }
+    .lock-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lock-icon {
+      font-size: 16px;
+      color: #666;
+    }
+    .lock-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
       flex: 1;
     }
-    select option {
-      background: #333;
-      color: white;
-    }
-    button {
-      background: #007AFF;
-      color: white;
+    .lock-toggle {
+      margin-left: auto;
+      width: 48px;
+      height: 24px;
+      border-radius: 12px;
       border: none;
-      border-radius: 4px;
-      padding: 6px 12px;
-      font-size: 12px;
       cursor: pointer;
-      transition: background 0.2s;
+      position: relative;
+      transition: all 0.2s;
     }
-    button:hover {
-      background: #0056CC;
+    .lock-toggle.off {
+      background: #ddd;
     }
-    button:disabled {
-      background: rgba(255,255,255,0.3);
-      cursor: not-allowed;
+    .lock-toggle.on {
+      background: #007AFF;
+    }
+    .lock-toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      top: 2px;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .lock-toggle.off::after {
+      left: 2px;
+    }
+    .lock-toggle.on::after {
+      left: 26px;
     }
     .status {
+      text-align: center;
       font-size: 11px;
-      opacity: 0.8;
+      color: #999;
+      background: rgba(0, 0, 0, 0.03);
+      padding: 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
   <div id="box">
     <div id="header">
-      <div id="title">Webcam Controls</div>
-      <button id="toggleBtn" title="Toggle controls">⚙</button>
+      <button id="toggleBtn" title="Toggle controls">×</button>
     </div>
     
     <div id="content">
-      <div class="row">
-        <label for="cameraSelect">Camera:</label>
-        <select id="cameraSelect">
-          <option value="">Loading cameras...</option>
+      <!-- Media Controls -->
+      <div class="media-controls">
+        <button class="media-btn camera-btn" id="cameraBtn" title="Camera">
+          📹
+        </button>
+        <button class="media-btn screenshot-btn" id="screenshotBtn" title="Screenshot">
+          📷
+        </button>
+        <button class="media-btn home-btn" id="homeBtn" title="Home">
+          🏠
+        </button>
+      </div>
+
+      <!-- Full Screen Mode -->
+      <div class="screen-mode">
+        <span class="screen-icon">💻</span>
+        <span class="screen-label">Full screen</span>
+      </div>
+
+      <!-- Camera Section -->
+      <div class="camera-section">
+        <div class="camera-header">
+          <span class="camera-icon">📹</span>
+          <span class="camera-status" id="cameraStatus">No Camera</span>
+          <button class="camera-toggle off" id="cameraToggle"></button>
+        </div>
+        <select class="camera-dropdown" id="cameraSelect" style="display: none;">
+          <option value="">Select Camera...</option>
         </select>
       </div>
-      
-      <div class="row">
-        <button id="startBtn">Start</button>
-        <button id="stopBtn" disabled>Stop</button>
+
+      <!-- Microphone Section -->
+      <div class="microphone-section">
+        <div class="microphone-header">
+          <span class="microphone-icon">🎤</span>
+          <span class="microphone-label">Default - MacBook Pro Microphone</span>
+          <span class="microphone-status">On</span>
+        </div>
       </div>
-      
-      <div class="row">
-        <button id="recordBtn" disabled>🔴 Record</button>
-        <button id="stopRecordBtn" disabled>⏹ Stop Recording</button>
+
+      <!-- Recording Section -->
+      <div class="recording-section">
+        <button class="record-btn" id="recordBtn" title="Start Recording">
+          ⏺
+        </button>
       </div>
-      
-      <div class="row">
-        <input id="lockToggle" type="checkbox" checked />
-        <label for="lockToggle">Lock</label>
+      <div class="recording-time hidden" id="recordingTime">5 min recording limit</div>
+
+      <!-- Lock Toggle Section -->
+      <div class="lock-section">
+        <div class="lock-header">
+          <span class="lock-icon">🔒</span>
+          <span class="lock-label">Lock Position</span>
+          <button class="lock-toggle on" id="lockToggle"></button>
+        </div>
       </div>
-      
-      <div class="status" id="status">Select camera and click Start</div>
+
+      <div class="status" id="status">Camera issue detected</div>
     </div>
   </div>
 
   <script>
     const { ipcRenderer } = require("electron");
-    const lockToggle = document.getElementById("lockToggle");
     const cameraSelect = document.getElementById("cameraSelect");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
+    const cameraBtn = document.getElementById("cameraBtn");
+    const cameraStatus = document.getElementById("cameraStatus");
+    const cameraToggle = document.getElementById("cameraToggle");
+    const lockToggle = document.getElementById("lockToggle");
     const recordBtn = document.getElementById("recordBtn");
-    const stopRecordBtn = document.getElementById("stopRecordBtn");
+    const recordingTime = document.getElementById("recordingTime");
     const status = document.getElementById("status");
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
@@ -163,6 +441,10 @@
     let isOverlayActive = false;
     let isCollapsed = false;
     let isRecording = false;
+    let isCameraOn = false;
+    let isLocked = true;
+    let recordingInterval;
+    let recordingStartTime;
 
     // Toggle collapse/expand
     toggleBtn.addEventListener("click", () => {
@@ -171,12 +453,12 @@
         box.classList.add("collapsed");
         toggleBtn.textContent = "▶";
         toggleBtn.title = "Expand controls";
-        ipcRenderer.send("resize-controls", 40, 40);
+        ipcRenderer.send("resize-controls", 48, 48);
       } else {
         box.classList.remove("collapsed");
-        toggleBtn.textContent = "⚙";
+        toggleBtn.textContent = "×";
         toggleBtn.title = "Collapse controls";
-        ipcRenderer.send("resize-controls", 240, 160);
+        ipcRenderer.send("resize-controls", 320, 400);
       }
     });
 
@@ -186,10 +468,11 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         
-        cameraSelect.innerHTML = '';
+        cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
         if (videoDevices.length === 0) {
-          cameraSelect.innerHTML = '<option value="">No cameras found</option>';
-          startBtn.disabled = true;
+          cameraStatus.textContent = "No Camera";
+          cameraStatus.classList.add("off");
+          cameraToggle.disabled = true;
           status.textContent = "No cameras available";
           return;
         }
@@ -201,126 +484,194 @@
           cameraSelect.appendChild(option);
         });
         
-        status.textContent = "Select camera and click Start";
-        startBtn.disabled = false;
+        // Set first camera as default
+        if (videoDevices.length > 0) {
+          cameraSelect.value = videoDevices[0].deviceId;
+          cameraStatus.textContent = videoDevices[0].label || "Camera 1";
+          cameraStatus.classList.remove("off");
+          status.textContent = "Ready to record";
+        }
       } catch (err) {
         console.error("Error loading cameras:", err);
-        cameraSelect.innerHTML = '<option value="">Error loading cameras</option>';
-        status.textContent = "Error accessing cameras";
-        startBtn.disabled = true;
+        cameraStatus.textContent = "Camera Error";
+        cameraStatus.classList.add("off");
+        status.textContent = "Camera issue detected";
+        cameraToggle.disabled = true;
       }
     }
 
-    // Start overlay
-    startBtn.addEventListener("click", () => {
-      const selectedCamera = cameraSelect.value;
-      if (!selectedCamera) {
-        status.textContent = "Please select a camera";
-        return;
+    // Camera toggle
+    cameraToggle.addEventListener("click", () => {
+      if (cameraToggle.disabled) return;
+      
+      isCameraOn = !isCameraOn;
+      
+      if (isCameraOn) {
+        cameraToggle.classList.remove("off");
+        cameraToggle.classList.add("on");
+        cameraBtn.classList.add("active");
+        cameraSelect.style.display = "block";
+        
+        const selectedCamera = cameraSelect.value;
+        if (selectedCamera) {
+          ipcRenderer.send("start-overlay", selectedCamera);
+          isOverlayActive = true;
+          status.textContent = "Camera active";
+        }
+      } else {
+        cameraToggle.classList.remove("on");
+        cameraToggle.classList.add("off");
+        cameraBtn.classList.remove("active");
+        cameraSelect.style.display = "none";
+        
+        if (isOverlayActive) {
+          ipcRenderer.send("stop-overlay");
+          isOverlayActive = false;
+        }
+        status.textContent = "Camera off";
+      }
+    });
+
+    // Camera selection change
+    cameraSelect.addEventListener("change", () => {
+      if (isCameraOn && cameraSelect.value) {
+        ipcRenderer.send("stop-overlay");
+        setTimeout(() => {
+          ipcRenderer.send("start-overlay", cameraSelect.value);
+          status.textContent = "Camera switched";
+        }, 100);
       }
       
-      ipcRenderer.send("start-overlay", selectedCamera);
-      
-      isOverlayActive = true;
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-      recordBtn.disabled = false;
-      cameraSelect.disabled = true;
-      status.textContent = "Overlay active";
+      if (cameraSelect.value) {
+        const selectedOption = cameraSelect.options[cameraSelect.selectedIndex];
+        cameraStatus.textContent = selectedOption.textContent;
+      }
     });
 
-    // Stop overlay
-    stopBtn.addEventListener("click", () => {
-      ipcRenderer.send("stop-overlay");
+    // Lock toggle
+    lockToggle.addEventListener("click", () => {
+      isLocked = !isLocked;
       
-      isOverlayActive = false;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      recordBtn.disabled = true;
-      stopRecordBtn.disabled = true;
-      cameraSelect.disabled = false;
-      status.textContent = "Click Start to activate camera";
+      if (isLocked) {
+        lockToggle.classList.remove("off");
+        lockToggle.classList.add("on");
+      } else {
+        lockToggle.classList.remove("on");
+        lockToggle.classList.add("off");
+      }
+      
+      ipcRenderer.send("set-lock", isLocked);
     });
 
-    // Start recording
+    // Start/Stop recording
     recordBtn.addEventListener("click", () => {
-      ipcRenderer.send("start-recording");
-      
-      isRecording = true;
-      recordBtn.disabled = true;
-      stopRecordBtn.disabled = false;
-      status.textContent = "Recording...";
+      if (!isRecording) {
+        // Start recording
+        isRecording = true;
+        recordBtn.classList.add("recording");
+        recordBtn.textContent = "⏹";
+        recordBtn.title = "Stop Recording";
+        recordingTime.classList.remove("hidden");
+        
+        recordingStartTime = Date.now();
+        recordingInterval = setInterval(updateRecordingTime, 1000);
+        
+        ipcRenderer.send("start-recording");
+        status.textContent = "Recording...";
+      } else {
+        // Stop recording
+        stopRecording();
+        ipcRenderer.send("stop-recording");
+      }
     });
 
-    // Stop recording
-    stopRecordBtn.addEventListener("click", () => {
-      ipcRenderer.send("stop-recording");
-      
+    function stopRecording() {
       isRecording = false;
-      recordBtn.disabled = false;
-      stopRecordBtn.disabled = true;
+      recordBtn.classList.remove("recording");
+      recordBtn.textContent = "⏺";
+      recordBtn.title = "Start Recording";
+      recordingTime.classList.add("hidden");
+      
+      if (recordingInterval) {
+        clearInterval(recordingInterval);
+        recordingInterval = null;
+      }
+      
       status.textContent = "Recording saved";
-    });
+      setTimeout(() => {
+        status.textContent = isCameraOn ? "Camera active" : "Ready to record";
+      }, 2000);
+    }
 
-    // Send toggle to main
-    lockToggle.addEventListener("change", () => {
-      ipcRenderer.send("set-lock", lockToggle.checked);
-    });
-
-    // Update UI when main broadcasts change
-    ipcRenderer.on("lock-changed", (_, locked) => {
-      lockToggle.checked = !!locked;
-    });
+    function updateRecordingTime() {
+      if (!isRecording) return;
+      
+      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      const remaining = Math.max(0, 300 - elapsed); // 5 minute limit
+      const remainingMinutes = Math.floor(remaining / 60);
+      const remainingSeconds = remaining % 60;
+      
+      recordingTime.textContent = `${remainingMinutes}:${remainingSeconds.toString().padStart(2, '0')} remaining`;
+      
+      if (remaining <= 0) {
+        stopRecording();
+        ipcRenderer.send("stop-recording");
+      }
+    }
 
     // Handle overlay status updates from main process
     ipcRenderer.on("overlay-status", (_, active) => {
       isOverlayActive = active;
-      startBtn.disabled = active;
-      stopBtn.disabled = !active;
-      recordBtn.disabled = !active;
-      cameraSelect.disabled = active;
-      status.textContent = active ? "Overlay active" : "Overlay stopped";
+      if (!active && isCameraOn) {
+        // Camera was turned off externally
+        isCameraOn = false;
+        cameraToggle.classList.remove("on");
+        cameraToggle.classList.add("off");
+        cameraBtn.classList.remove("active");
+        cameraSelect.style.display = "none";
+        status.textContent = "Camera off";
+      }
     });
 
     // Handle recording status updates
     ipcRenderer.on("recording-status", (_, recording) => {
-      isRecording = recording;
-      recordBtn.disabled = recording;
-      stopRecordBtn.disabled = !recording;
-      if (recording) {
-        status.textContent = "Recording screen...";
+      if (!recording && isRecording) {
+        stopRecording();
       }
     });
 
     // Handle recording saved notification
     ipcRenderer.on("recording-saved", (_, filePath) => {
       status.textContent = `Recording saved to Desktop`;
-      setTimeout(() => {
-        if (isOverlayActive) {
-          status.textContent = "Overlay active";
-        }
-      }, 3000);
     });
 
     // Handle recording errors
     ipcRenderer.on("recording-error", (_, error) => {
       status.textContent = `Recording error: ${error}`;
-      isRecording = false;
-      recordBtn.disabled = false;
-      stopRecordBtn.disabled = true;
+      if (isRecording) {
+        stopRecording();
+      }
     });
 
     // Handle when user ends recording via system controls
     ipcRenderer.on("recording-ended-by-user", () => {
-      status.textContent = "Recording stopped by user";
-      isRecording = false;
-      recordBtn.disabled = false;
-      stopRecordBtn.disabled = true;
-      setTimeout(() => {
-        if (isOverlayActive) {
-          status.textContent = "Overlay active";
-        }
-      }, 2000);
+      if (isRecording) {
+        stopRecording();
+      }
+    });
+
+    // Handle lock state changes from main process
+    ipcRenderer.on("lock-changed", (_, locked) => {
+      isLocked = !!locked;
+      if (isLocked) {
+        lockToggle.classList.remove("off");
+        lockToggle.classList.add("on");
+      } else {
+        lockToggle.classList.remove("on");
+        lockToggle.classList.add("off");
+      }
     });
 
     // Load cameras when page loads

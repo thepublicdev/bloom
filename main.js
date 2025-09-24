@@ -60,10 +60,10 @@ function createWindows() {
 
   // small clickable control window (checkbox)
   controlWin = new BrowserWindow({
-    x: startX + startW - 240, // Position to extend left from overlay
+    x: startX + startW - 320, // Position to extend left from overlay - updated width
     y: startY - 10, // Slightly above overlay
-    width: 240,
-    height: 160, // Increased height for recording buttons
+    width: 320, // Increased width for new design
+    height: 400, // Increased height for new layout
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -219,7 +219,7 @@ function createWindows() {
   });
 
   // Create tray icon
-  const iconPath = path.join(__dirname, "assets", "icons.png");
+  const iconPath = path.join(__dirname, "assets", "icon.png");
   tray = new Tray(iconPath);
 
   // Optional: Set a tooltip for the tray icon
