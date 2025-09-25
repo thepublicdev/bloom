@@ -339,18 +339,25 @@
           }
         }
 
-        // Create MediaRecorder with explicit audio/video codecs
+        // Create MediaRecorder with cross-platform compatible codecs
         recordedChunks = [];
-        const options = {
-          mimeType: 'video/webm; codecs=vp9,opus'
-        };
+        let options = {};
         
-        // Fallback if VP9 with Opus isn't supported
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        // Try MP4 with H.264/AAC first (best Windows compatibility)
+        if (MediaRecorder.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"')) {
+          options.mimeType = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"';
+        }
+        // Fallback to WebM with VP9/Opus (high quality, good modern browser support)
+        else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9,opus')) {
+          options.mimeType = 'video/webm; codecs=vp9,opus';
+        }
+        // Fallback to WebM with VP8/Vorbis (broader compatibility)
+        else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,vorbis')) {
           options.mimeType = 'video/webm; codecs=vp8,vorbis';
-          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            options.mimeType = 'video/webm';
-          }
+        }
+        // Final fallback to basic WebM
+        else {
+          options.mimeType = 'video/webm';
         }
         
         mediaRecorder = new MediaRecorder(combinedStream, options);
@@ -404,14 +411,27 @@
       }
 
       try {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        // Determine the appropriate MIME type and file extension
+        let mimeType = 'video/webm';
+        let fileExtension = 'webm';
+        
+        if (mediaRecorder && mediaRecorder.mimeType) {
+          mimeType = mediaRecorder.mimeType;
+          if (mimeType.includes('mp4')) {
+            fileExtension = 'mp4';
+          } else if (mimeType.includes('webm')) {
+            fileExtension = 'webm';
+          }
+        }
+        
+        const blob = new Blob(recordedChunks, { type: mimeType });
         const buffer = await blob.arrayBuffer();
         const { ipcRenderer: ipc } = require("electron");
         
-        // Generate filename with timestamp
+        // Generate filename with timestamp and appropriate extension
         const now = new Date();
         const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        const filename = `screen-recording-${timestamp}.webm`;
+        const filename = `screen-recording-${timestamp}.${fileExtension}`;
         
         // Send to main process to save file
         ipc.send("save-recording", {
@@ -419,7 +439,7 @@
           filename: filename
         });
 
-        console.log(`Recording saved as ${filename}`);
+        console.log(`Recording saved as ${filename} (${mimeType})`);
         
       } catch (err) {
         console.error("Error saving recording:", err);
