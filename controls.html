@@ -45,6 +45,14 @@
     #header:hover {
       background: rgba(0, 0, 0, 0.02);
     }
+    #headerLogo {
+      height: 70px;
+      width: auto;
+      transition: opacity 0.2s;
+    }
+    #headerLogo:hover {
+      opacity: 1;
+    }
     #toggleBtn {
       background: rgba(0, 0, 0, 0.05);
       border: none;
@@ -431,6 +439,10 @@
       padding: 4px;
     }
     
+    #box.collapsed #headerLogo {
+      display: none;
+    }
+    
     #box.collapsed #toggleBtn {
       width: 20px;
       height: 20px;
@@ -451,6 +463,7 @@
 <body>
   <div id="box">
     <div id="header">
+      <img src="assets/bloom-app-header.png" alt="Bloom" id="headerLogo" />
       <button id="toggleBtn" title="Toggle controls">×</button>
     </div>
     
