@@ -120,18 +120,6 @@ function createWindows() {
     );
   });
 
-  // Resize overlay window (called from overlay renderer)
-  ipcMain.on("resize-window", (_, w, h) => {
-    overlayWin.setSize(Math.round(w), Math.round(h));
-    const b = overlayWin.getBounds();
-    const controlBounds = controlWin.getBounds();
-    controlWin.setPosition(
-      b.x + b.width - controlBounds.width,
-      b.y - 10,
-      false
-    );
-  });
-
   // Resize overlay window (called from controls when using preset sizes)
   ipcMain.on("resize-overlay", (_, w, h) => {
     // Add extra height for resize controls positioned beneath the video

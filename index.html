@@ -88,8 +88,8 @@
       border: 2px solid rgba(0,0,0,0.1);
       border-radius: 50%;
       position: absolute;
-      right: -12px;
-      bottom: -12px;
+      right: 6px;
+      bottom: 6px;
       cursor: se-resize;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       transition: all 0.2s ease;
@@ -164,25 +164,37 @@
       }
     }
 
+    // Update button states based on current window size
+    function updateButtonStatesFromSize() {
+      const currentSize = Math.min(window.innerWidth, window.innerHeight) - 80; // Account for extra height
+      if (currentSize <= 220) {
+        updateOverlayResizeButtons(resizeSmallOverlay);
+      } else if (currentSize <= 340) {
+        updateOverlayResizeButtons(resizeMediumOverlay);
+      } else {
+        updateOverlayResizeButtons(resizeLargeOverlay);
+      }
+    }
+
     resizeSmallOverlay.addEventListener("click", (e) => {
       if (locked) return;
       e.stopPropagation();
       updateOverlayResizeButtons(resizeSmallOverlay);
-      ipcRenderer.send("resize-window", 200, 250); // Extra height for controls
+      ipcRenderer.send("resize-overlay", 200, 200); // Using resize-overlay to ensure controls reposition
     });
 
     resizeMediumOverlay.addEventListener("click", (e) => {
       if (locked) return;
       e.stopPropagation();
       updateOverlayResizeButtons(resizeMediumOverlay);
-      ipcRenderer.send("resize-window", 320, 370); // Extra height for controls
+      ipcRenderer.send("resize-overlay", 320, 320); // Using resize-overlay to ensure controls reposition
     });
 
     resizeLargeOverlay.addEventListener("click", (e) => {
       if (locked) return;
       e.stopPropagation();
       updateOverlayResizeButtons(resizeLargeOverlay);
-      ipcRenderer.send("resize-window", 480, 530); // Extra height for controls
+      ipcRenderer.send("resize-overlay", 480, 480); // Using resize-overlay to ensure controls reposition
     });
 
     // grab webcam
@@ -418,12 +430,19 @@
 
     window.addEventListener("mousemove", (e) => {
       if (!resizing) return;
-      let newW = Math.max(100, startW + (e.screenX - startScreenX)); // Increased minimum size
-      let newH = Math.max(100, startH + (e.screenY - startScreenY)); // Increased minimum size
-      ipcRenderer.send("resize-window", newW, newH);
+      // Calculate the maximum of width and height changes to keep it square
+      let deltaW = e.screenX - startScreenX;
+      let deltaH = e.screenY - startScreenY;
+      let delta = Math.max(deltaW, deltaH); // Use the larger delta to maintain square aspect ratio
+      
+      let newSize = Math.max(150, Math.min(startW, startH) + delta); // Minimum 150px, start from smaller dimension
+      ipcRenderer.send("resize-overlay", newSize, newSize); // Use resize-overlay and ensure square
     });
 
     window.addEventListener("mouseup", () => { 
+      if (resizing) {
+        updateButtonStatesFromSize(); // Update button states after manual resize
+      }
       resizing = false;
       resizer.classList.remove("resizing");
     });
