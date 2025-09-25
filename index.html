@@ -52,7 +52,7 @@
     const resizer = document.querySelector(".resizer");
 
     // track lock state
-    let locked = true;
+    let locked = false; // Changed default to false (unlocked)
     ipcRenderer.on("lock-changed", (_, value) => {
       locked = !!value;
       // when unlocked overlay receives mouse events, but we still respect locked flag to disable drag/resize logic

@@ -35,6 +35,13 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
+      cursor: move;
+      padding: 4px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    #header:hover {
+      background: rgba(0, 0, 0, 0.02);
     }
     #toggleBtn {
       background: rgba(0, 0, 0, 0.05);
@@ -417,7 +424,7 @@
         <div class="lock-header">
           <span class="lock-icon">🔒</span>
           <span class="lock-label">Lock Position</span>
-          <button class="lock-toggle on" id="lockToggle"></button>
+          <button class="lock-toggle off" id="lockToggle"></button>
         </div>
       </div>
 
@@ -442,9 +449,60 @@
     let isCollapsed = false;
     let isRecording = false;
     let isCameraOn = false;
-    let isLocked = true;
+    let isLocked = false; // Changed default to false (unlocked)
     let recordingInterval;
     let recordingStartTime;
+
+    // Drag functionality for controls window
+    let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
+
+    // Make the header the primary drag handle
+    const header = document.getElementById("header");
+    header.addEventListener("mousedown", (e) => {
+      if (isLocked) return; // Don't drag when locked
+      if (isCollapsed) return; // Don't drag when collapsed (too small)
+      
+      // Don't start drag if clicking the toggle button
+      if (e.target.id === 'toggleBtn') {
+        return;
+      }
+      
+      dragging = true;
+      dragOffsetX = e.clientX;
+      dragOffsetY = e.clientY;
+      e.preventDefault();
+    });
+
+    // Also allow dragging from the main box area (avoiding interactive elements)
+    box.addEventListener("mousedown", (e) => {
+      if (isLocked) return;
+      if (isCollapsed) return;
+      
+      // Don't start drag on interactive elements
+      if (e.target.tagName === 'BUTTON' || 
+          e.target.tagName === 'SELECT' || 
+          e.target.tagName === 'OPTION' ||
+          e.target.closest('#header')) { // Skip if already handled by header
+        return;
+      }
+      
+      dragging = true;
+      dragOffsetX = e.clientX;
+      dragOffsetY = e.clientY;
+      e.preventDefault();
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      // Calculate new position based on screen coordinates
+      const newX = e.screenX - dragOffsetX;
+      const newY = e.screenY - dragOffsetY;
+      ipcRenderer.send("move-controls", newX, newY);
+    });
+
+    window.addEventListener("mouseup", () => {
+      dragging = false;
+    });
 
     // Toggle collapse/expand
     toggleBtn.addEventListener("click", () => {

@@ -84,15 +84,15 @@ function createWindows() {
   overlayWin.loadFile("index.html");
   controlWin.loadFile("controls.html");
 
-  // Start in "locked" mode (click-through)
-  overlayWin.setIgnoreMouseEvents(true, { forward: true });
+  // Start in "unlocked" mode (draggable) - changed from locked
+  overlayWin.setIgnoreMouseEvents(false);
 
   // After renderer loads, send initial lock state so UI can reflect it
   overlayWin.webContents.once("did-finish-load", () => {
-    overlayWin.webContents.send("lock-changed", true);
+    overlayWin.webContents.send("lock-changed", false);
   });
   controlWin.webContents.once("did-finish-load", () => {
-    controlWin.webContents.send("lock-changed", true);
+    controlWin.webContents.send("lock-changed", false);
   });
 
   // Move overlay window (called from overlay renderer during dragging)
@@ -104,6 +104,19 @@ function createWindows() {
     controlWin.setPosition(
       b.x + b.width - controlBounds.width,
       b.y - 10,
+      false
+    );
+  });
+
+  // Move controls window (called from controls renderer during dragging)
+  ipcMain.on("move-controls", (_, x, y) => {
+    controlWin.setPosition(Math.round(x), Math.round(y));
+    // Move overlay window to maintain relative position
+    const controlBounds = controlWin.getBounds();
+    const overlayBounds = overlayWin.getBounds();
+    overlayWin.setPosition(
+      controlBounds.x - overlayBounds.width + controlBounds.width,
+      controlBounds.y + 10,
       false
     );
   });
