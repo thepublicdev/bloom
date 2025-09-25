@@ -259,6 +259,24 @@
       font-weight: 500;
       margin-top: 8px;
     }
+    .recording-link {
+      text-align: center;
+      margin-top: 8px;
+    }
+    .recording-link a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .recording-link a:hover {
+      background: var(--primary-color-light);
+      color: var(--primary-color-hover);
+    }
     .lock-section {
       margin-bottom: 16px;
     }
@@ -517,6 +535,9 @@
         </button>
       </div>
       <div class="recording-time hidden" id="recordingTime">0:00</div>
+      <div class="recording-link hidden" id="recordingLink">
+        <a href="#" id="openFolderLink" title="Open recordings folder">📁 Open recordings folder</a>
+      </div>
 
       <!-- Lock Toggle Section -->
       <div class="lock-section">
@@ -539,6 +560,8 @@
     const lockToggle = document.getElementById("lockToggle");
     const recordBtn = document.getElementById("recordBtn");
     const recordingTime = document.getElementById("recordingTime");
+    const recordingLink = document.getElementById("recordingLink");
+    const openFolderLink = document.getElementById("openFolderLink");
     const status = document.getElementById("status");
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
@@ -764,6 +787,12 @@
       ipcRenderer.send("set-lock", isLocked);
     });
 
+    // Open recordings folder
+    openFolderLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      ipcRenderer.send("open-recordings-folder");
+    });
+
 
 
     // Start/Stop recording
@@ -775,6 +804,7 @@
         recordBtn.textContent = "Stop Recording";
         recordBtn.title = "Stop Recording";
         recordingTime.classList.remove("hidden");
+        recordingLink.classList.add("hidden"); // Hide the folder link when starting new recording
         
         recordingStartTime = Date.now();
         recordingInterval = setInterval(() => {
@@ -807,6 +837,7 @@
       updateCollapsedStatus(); // Update collapsed status indicators
       
       status.textContent = "Recording saved";
+      recordingLink.classList.remove("hidden"); // Show the folder link
       setTimeout(() => {
         status.textContent = isCameraOn ? "Camera active" : "Ready to record";
       }, 2000);

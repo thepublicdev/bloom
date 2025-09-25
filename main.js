@@ -5,6 +5,7 @@ const {
   desktopCapturer,
   dialog,
   session,
+  shell,
   Tray,
   Menu,
 } = require("electron");
@@ -224,6 +225,12 @@ function createWindows() {
       console.error("Error saving recording file:", err);
       controlWin.webContents.send("recording-error", err.message);
     }
+  });
+
+  // Open recordings folder
+  ipcMain.on("open-recordings-folder", () => {
+    const desktopPath = path.join(os.homedir(), "Desktop");
+    shell.openPath(desktopPath);
   });
 
   // If overlay is closed, close control window too
