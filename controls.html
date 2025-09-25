@@ -439,7 +439,7 @@
       font-size: 14px;
       height: 100%;
       width: 100%;
-      padding: 16px 0;
+      padding: 40px 0 16px 0; /* Top padding to avoid expand button */
       box-sizing: border-box;
     }
     
@@ -486,7 +486,7 @@
     
     #box.collapsed #header {
       position: absolute;
-      top: -35px;
+      top: 5px;
       left: 50%;
       transform: translateX(-50%);
       margin: 0;
@@ -672,7 +672,7 @@
         box.classList.add("collapsed");
         toggleBtn.textContent = "▶";
         toggleBtn.title = "Expand controls";
-        ipcRenderer.send("resize-controls", 60, 240);
+        ipcRenderer.send("resize-controls", 60, 280); // Increased height to accommodate expand button
         updateCollapsedStatus(); // Update status indicators when collapsed
       } else {
         box.classList.remove("collapsed");
