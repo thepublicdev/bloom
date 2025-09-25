@@ -12,9 +12,10 @@ const {
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const mixpanel = require('mixpanel-browser');
+const Mixpanel = require('mixpanel');
 
-mixpanel.init('6506b5250de6efccb495adaee0d8862d', {
+// Initialize Mixpanel for Node.js (main process)
+const mixpanel = Mixpanel.init('6506b5250de6efccb495adaee0d8862d', {
     debug: !app.isPackaged, // true in development, false in production
     geolocate: true,
 });
