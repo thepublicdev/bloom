@@ -36,7 +36,7 @@ function createWindows() {
 
   // initial overlay window size & position
   const startW = 520;
-  const startH = 520;
+  const startH = 600; // Increased to accommodate resize controls beneath video
   const startX = 100;
   const startY = 100;
 
@@ -134,7 +134,9 @@ function createWindows() {
 
   // Resize overlay window (called from controls when using preset sizes)
   ipcMain.on("resize-overlay", (_, w, h) => {
-    overlayWin.setSize(Math.round(w), Math.round(h));
+    // Add extra height for resize controls positioned beneath the video
+    const extraHeight = 80; // Space for controls positioned at bottom: -45px
+    overlayWin.setSize(Math.round(w), Math.round(h + extraHeight));
     // Reposition controls to maintain alignment to the right
     const overlayBounds = overlayWin.getBounds();
     controlWin.setPosition(

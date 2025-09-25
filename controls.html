@@ -489,19 +489,6 @@
         </div>
       </div>
 
-      <!-- Resize Controls Section -->
-      <div class="resize-section" style="border: 2px solid #007AFF; background: rgba(0, 122, 255, 0.1);">
-        <div class="resize-header">
-          <span class="resize-icon">📏</span>
-          <span class="resize-label">WEBCAM SIZE</span>
-        </div>
-        <div class="resize-controls">
-          <button class="resize-btn" id="resizeSmall" title="Small">SMALL</button>
-          <button class="resize-btn" id="resizeMedium" title="Medium">MED</button>
-          <button class="resize-btn" id="resizeLarge" title="Large">LARGE</button>
-        </div>
-      </div>
-
       <div class="status" id="status">Camera issue detected</div>
     </div>
   </div>
@@ -518,9 +505,6 @@
     const status = document.getElementById("status");
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
-    const resizeSmall = document.getElementById("resizeSmall");
-    const resizeMedium = document.getElementById("resizeMedium");
-    const resizeLarge = document.getElementById("resizeLarge");
     
     let isOverlayActive = false;
     let isCollapsed = false;
@@ -529,7 +513,6 @@
     let isLocked = false; // Changed default to false (unlocked)
     let recordingInterval;
     let recordingStartTime;
-    let currentSize = 'medium'; // Track current size
 
     // Drag functionality for controls window
     let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
@@ -699,45 +682,7 @@
       ipcRenderer.send("set-lock", isLocked);
     });
 
-    // Resize controls
-    function updateResizeButtons(activeButton) {
-      const buttons = [resizeSmall, resizeMedium, resizeLarge];
-      buttons.forEach(btn => btn.classList.remove("active"));
-      if (activeButton) {
-        activeButton.classList.add("active");
-      }
-    }
 
-    resizeSmall.addEventListener("click", () => {
-      currentSize = 'small';
-      updateResizeButtons(resizeSmall);
-      ipcRenderer.send("resize-overlay", 200, 200);
-      status.textContent = "Webcam resized to small";
-    });
-
-    resizeMedium.addEventListener("click", () => {
-      currentSize = 'medium';
-      updateResizeButtons(resizeMedium);
-      ipcRenderer.send("resize-overlay", 320, 320);
-      status.textContent = "Webcam resized to medium";
-    });
-
-    resizeLarge.addEventListener("click", () => {
-      currentSize = 'large';
-      updateResizeButtons(resizeLarge);
-      ipcRenderer.send("resize-overlay", 480, 480);
-      status.textContent = "Webcam resized to large";
-    });
-
-    // Set initial medium size as active
-    updateResizeButtons(resizeMedium);
-    
-    // Debug: Log that resize controls are initialized
-    console.log("Resize controls initialized:", {
-      small: resizeSmall,
-      medium: resizeMedium,
-      large: resizeLarge,
-    });
 
     // Start/Stop recording
     recordBtn.addEventListener("click", () => {
