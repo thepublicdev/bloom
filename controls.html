@@ -77,54 +77,6 @@
       margin: 0;
       justify-content: center;
     }
-    .media-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .media-btn {
-      width: 48px;
-      height: 48px;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      transition: all 0.2s;
-      position: relative;
-    }
-    .camera-btn {
-      background: #f0f0f0;
-      color: #666;
-    }
-    .camera-btn.active {
-      background: #007AFF;
-      color: white;
-    }
-    .camera-btn:hover {
-      background: #e0e0e0;
-    }
-    .camera-btn.active:hover {
-      background: #0056CC;
-    }
-    .screenshot-btn {
-      background: #f0f0f0;
-      color: #666;
-    }
-    .screenshot-btn:hover {
-      background: #e0e0e0;
-    }
-    .home-btn {
-      background: #f0f0f0;
-      color: #666;
-    }
-    .home-btn:hover {
-      background: #e0e0e0;
-    }
     .camera-section {
       margin-bottom: 16px;
     }
@@ -510,19 +462,6 @@
     </div>
     
     <div id="content">
-      <!-- Media Controls -->
-      <div class="media-controls">
-        <button class="media-btn camera-btn" id="cameraBtn" title="Camera">
-          📹
-        </button>
-        <button class="media-btn screenshot-btn" id="screenshotBtn" title="Screenshot">
-          📷
-        </button>
-        <button class="media-btn home-btn" id="homeBtn" title="Home">
-          🏠
-        </button>
-      </div>
-
       <!-- Camera Section -->
       <div class="camera-section">
         <div class="camera-header">
@@ -568,7 +507,6 @@
   <script>
     const { ipcRenderer } = require("electron");
     const cameraSelect = document.getElementById("cameraSelect");
-    const cameraBtn = document.getElementById("cameraBtn");
     const cameraStatus = document.getElementById("cameraStatus");
     const cameraToggle = document.getElementById("cameraToggle");
     const lockToggle = document.getElementById("lockToggle");
@@ -745,7 +683,6 @@
       if (isCameraOn) {
         cameraToggle.classList.remove("off");
         cameraToggle.classList.add("on");
-        cameraBtn.classList.add("active");
         cameraSelect.style.display = "block";
         
         const selectedCamera = cameraSelect.value;
@@ -757,7 +694,6 @@
       } else {
         cameraToggle.classList.remove("on");
         cameraToggle.classList.add("off");
-        cameraBtn.classList.remove("active");
         cameraSelect.style.display = "none";
         
         if (isOverlayActive) {
@@ -867,7 +803,6 @@
         isCameraOn = false;
         cameraToggle.classList.remove("on");
         cameraToggle.classList.add("off");
-        cameraBtn.classList.remove("active");
         cameraSelect.style.display = "none";
         status.textContent = "Camera off";
       }
