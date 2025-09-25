@@ -34,10 +34,10 @@
     }
     #box.collapsed {
       min-width: auto;
-      width: 40px;
-      height: 200px;
-      padding: 0;
-      border-radius: 20px;
+      width: 48px;
+      height: 180px;
+      padding: 8px 0;
+      border-radius: 24px;
       display: flex;
       position: relative;
     }
@@ -390,16 +390,16 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
+      gap: 16px;
       font-size: 14px;
       height: 100%;
       width: 100%;
-      padding: 40px 0 16px 0; /* Top padding to avoid expand button */
+      padding: 32px 0 12px 0; /* Top padding to avoid expand button */
       box-sizing: border-box;
     }
     
     .status-indicator {
-      font-size: 22px;
+      font-size: 18px;
       opacity: 0.3;
       transition: opacity 0.2s;
       text-align: center;
@@ -614,7 +614,7 @@
         box.classList.add("collapsed");
         toggleBtn.textContent = "▶";
         toggleBtn.title = "Expand controls";
-        ipcRenderer.send("resize-controls", 60, 280); // Increased height to accommodate expand button
+        ipcRenderer.send("resize-controls", 68, 200); // Updated dimensions for better proportions
         updateCollapsedStatus(); // Update status indicators when collapsed
       } else {
         box.classList.remove("collapsed");
