@@ -21,6 +21,15 @@
       flex-direction: column;
       padding-bottom: 60px;
       box-sizing: border-box;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #wrapper.camera-active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
     }
     .video-container {
       position: relative;
@@ -215,10 +224,19 @@
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         currentStream = stream;
+        
+        // Show the wrapper and resize overlay to default size when camera starts
+        wrapper.classList.add("camera-active");
+        ipcRenderer.send("resize-overlay", 320, 320); // Default to medium size
+        updateOverlayResizeButtons(resizeMediumOverlay); // Set medium as active
       } catch (err) {
         console.error("webcam error:", err);
         video.srcObject = null;
         currentStream = null;
+        
+        // Hide the wrapper and collapse overlay if camera fails
+        wrapper.classList.remove("camera-active");
+        ipcRenderer.send("resize-overlay", 1, 1); // Minimal size
       }
     }
     
@@ -228,10 +246,17 @@
         currentStream = null;
       }
       video.srcObject = null;
+      
+      // Hide the wrapper and collapse overlay when camera stops
+      wrapper.classList.remove("camera-active");
+      ipcRenderer.send("resize-overlay", 1, 1); // Minimal size to make desktop accessible
     }
     
     // Don't auto-start camera anymore
     // initWebcam();
+
+    // Start with minimal overlay size since no camera is active
+    ipcRenderer.send("resize-overlay", 1, 1);
 
     // Listen for camera start/stop commands from controls
     ipcRenderer.on("start-camera", (_, cameraId) => {
