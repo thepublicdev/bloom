@@ -499,7 +499,6 @@
           <button class="resize-btn" id="resizeSmall" title="Small">SMALL</button>
           <button class="resize-btn" id="resizeMedium" title="Medium">MED</button>
           <button class="resize-btn" id="resizeLarge" title="Large">LARGE</button>
-          <button class="resize-btn custom-resize" id="resizeCustom" title="Drag to resize">⤡</button>
         </div>
       </div>
 
@@ -522,7 +521,6 @@
     const resizeSmall = document.getElementById("resizeSmall");
     const resizeMedium = document.getElementById("resizeMedium");
     const resizeLarge = document.getElementById("resizeLarge");
-    const resizeCustom = document.getElementById("resizeCustom");
     
     let isOverlayActive = false;
     let isCollapsed = false;
@@ -731,16 +729,6 @@
       status.textContent = "Webcam resized to large";
     });
 
-    resizeCustom.addEventListener("click", () => {
-      currentSize = 'custom';
-      updateResizeButtons(null);
-      if (isCameraOn) {
-        status.textContent = "Drag the resize handle on webcam to resize";
-      } else {
-        status.textContent = "Turn on camera to see resize handle";
-      }
-    });
-
     // Set initial medium size as active
     updateResizeButtons(resizeMedium);
     
@@ -749,7 +737,6 @@
       small: resizeSmall,
       medium: resizeMedium,
       large: resizeLarge,
-      custom: resizeCustom
     });
 
     // Start/Stop recording

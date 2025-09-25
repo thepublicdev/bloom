@@ -60,7 +60,7 @@ function createWindows() {
 
   // small clickable control window (checkbox)
   controlWin = new BrowserWindow({
-    x: startX + startW - 320, // Position to extend left from overlay - updated width
+    x: startX + startW + 10, // Position to the right of overlay with 10px gap
     y: startY - 10, // Slightly above overlay
     width: 320, // Increased width for new design
     height: 500, // Increased height to accommodate all controls
@@ -98,11 +98,10 @@ function createWindows() {
   // Move overlay window (called from overlay renderer during dragging)
   ipcMain.on("move-window", (_, x, y) => {
     overlayWin.setPosition(Math.round(x), Math.round(y));
-    // keep control window positioned to the left of overlay
+    // keep control window positioned to the right of overlay
     const b = overlayWin.getBounds();
-    const controlBounds = controlWin.getBounds();
     controlWin.setPosition(
-      b.x + b.width - controlBounds.width,
+      b.x + b.width + 10, // Position to right with 10px gap
       b.y - 10,
       false
     );
@@ -111,11 +110,11 @@ function createWindows() {
   // Move controls window (called from controls renderer during dragging)
   ipcMain.on("move-controls", (_, x, y) => {
     controlWin.setPosition(Math.round(x), Math.round(y));
-    // Move overlay window to maintain relative position
+    // Move overlay window to maintain relative position (controls to right of overlay)
     const controlBounds = controlWin.getBounds();
     const overlayBounds = overlayWin.getBounds();
     overlayWin.setPosition(
-      controlBounds.x - overlayBounds.width + controlBounds.width,
+      controlBounds.x - overlayBounds.width - 10, // Position overlay to left of controls with 10px gap
       controlBounds.y + 10,
       false
     );
@@ -136,11 +135,10 @@ function createWindows() {
   // Resize overlay window (called from controls when using preset sizes)
   ipcMain.on("resize-overlay", (_, w, h) => {
     overlayWin.setSize(Math.round(w), Math.round(h));
-    // Reposition controls to maintain alignment
+    // Reposition controls to maintain alignment to the right
     const overlayBounds = overlayWin.getBounds();
-    const controlBounds = controlWin.getBounds();
     controlWin.setPosition(
-      overlayBounds.x + overlayBounds.width - controlBounds.width,
+      overlayBounds.x + overlayBounds.width + 10, // Position to right with 10px gap
       overlayBounds.y - 10,
       false
     );
@@ -149,10 +147,10 @@ function createWindows() {
   // Resize controls window (called from controls when collapsing/expanding)
   ipcMain.on("resize-controls", (_, w, h) => {
     controlWin.setSize(Math.round(w), Math.round(h));
-    // Reposition to maintain alignment with overlay
+    // Reposition to maintain alignment to the right of overlay
     const overlayBounds = overlayWin.getBounds();
     controlWin.setPosition(
-      overlayBounds.x + overlayBounds.width - w,
+      overlayBounds.x + overlayBounds.width + 10, // Position to right with 10px gap
       overlayBounds.y - 10,
       false
     );
