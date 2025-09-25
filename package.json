@@ -111,9 +111,12 @@
     ]
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "Vanlab Technologies",
+    "email": "vaneycksemeotoki@gmail.com"
+  },
   "license": "ISC",
-  "description": "",
+  "description": "An Open-Source Alternative to Loom - Record your screen with webcam overlay",
   "devDependencies": {
     "electron": "^38.1.1",
     "electron-builder": "^24.13.3"
