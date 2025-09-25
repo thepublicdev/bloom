@@ -25,10 +25,12 @@
     }
     #box.collapsed {
       min-width: auto;
-      width: 48px;
-      height: 48px;
-      padding: 12px;
-      border-radius: 50%;
+      width: 40px;
+      height: 200px;
+      padding: 0;
+      border-radius: 20px;
+      display: flex;
+      position: relative;
     }
     #header {
       display: flex;
@@ -426,12 +428,103 @@
     .hidden {
       display: none;
     }
+    
+    /* Collapsed Status Bar Styles */
+    #collapsed-status {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      font-size: 14px;
+      height: 100%;
+      width: 100%;
+      padding: 16px 0;
+      box-sizing: border-box;
+    }
+    
+    .status-indicator {
+      font-size: 22px;
+      opacity: 0.3;
+      transition: opacity 0.2s;
+      text-align: center;
+      color: #666;
+    }
+    
+    .status-indicator.active {
+      opacity: 1;
+      color: #007AFF;
+    }
+    
+    .status-indicator.recording {
+      color: #ff4757;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-time {
+      font-size: 10px;
+      font-weight: 700;
+      color: #ff4757;
+      min-width: 30px;
+      text-align: center;
+      opacity: 0.9;
+      display: none;
+    }
+    
+    /* Collapsed state visibility rules */
+    #box.collapsed #collapsed-status {
+      display: flex;
+    }
+    
+    #box:not(.collapsed) #collapsed-status {
+      display: none;
+    }
+    
+    #box.collapsed #content {
+      display: none;
+    }
+    
+    #box.collapsed #header {
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 4px;
+    }
+    
+    #box.collapsed #toggleBtn {
+      width: 20px;
+      height: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #333;
+    }
+    
+    #box.collapsed #toggleBtn:hover {
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.05);
+    }
   </style>
 </head>
 <body>
   <div id="box">
     <div id="header">
       <button id="toggleBtn" title="Toggle controls">×</button>
+    </div>
+    
+    <!-- Collapsed Status Bar (only visible when collapsed) -->
+    <div id="collapsed-status">
+      <span id="webcam-indicator" class="status-indicator" title="Webcam">📹</span>
+      <span id="recording-indicator" class="status-indicator" title="Recording">⏺</span>
+      <span id="recording-time-collapsed" class="status-time">0:00</span>
     </div>
     
     <div id="content">
@@ -509,6 +602,11 @@
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
     
+    // Collapsed status elements
+    const webcamIndicator = document.getElementById("webcam-indicator");
+    const recordingIndicator = document.getElementById("recording-indicator");
+    const recordingTimeCollapsed = document.getElementById("recording-time-collapsed");
+    
     let isOverlayActive = false;
     let isCollapsed = false;
     let isRecording = false;
@@ -540,7 +638,6 @@
     // Also allow dragging from the main box area (avoiding interactive elements)
     box.addEventListener("mousedown", (e) => {
       if (isLocked) return;
-      if (isCollapsed) return;
       
       // Don't start drag on interactive elements
       if (e.target.tagName === 'BUTTON' || 
@@ -575,7 +672,8 @@
         box.classList.add("collapsed");
         toggleBtn.textContent = "▶";
         toggleBtn.title = "Expand controls";
-        ipcRenderer.send("resize-controls", 48, 48);
+        ipcRenderer.send("resize-controls", 60, 240);
+        updateCollapsedStatus(); // Update status indicators when collapsed
       } else {
         box.classList.remove("collapsed");
         toggleBtn.textContent = "×";
@@ -583,6 +681,35 @@
         ipcRenderer.send("resize-controls", 320, 500);
       }
     });
+
+    // Update collapsed status indicators
+    function updateCollapsedStatus() {
+      // Update webcam indicator
+      if (isCameraOn) {
+        webcamIndicator.classList.add("active");
+      } else {
+        webcamIndicator.classList.remove("active");
+      }
+      
+      // Update recording indicator
+      if (isRecording) {
+        recordingIndicator.classList.add("active", "recording");
+        recordingTimeCollapsed.style.display = "block";
+      } else {
+        recordingIndicator.classList.remove("active", "recording");
+        recordingTimeCollapsed.style.display = "none";
+      }
+    }
+    
+    function updateCollapsedRecordingTime() {
+      if (!isRecording) return;
+      
+      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      
+      recordingTimeCollapsed.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
 
     // Load available cameras
     async function loadCameras() {
@@ -652,6 +779,8 @@
         }
         status.textContent = "Camera off";
       }
+      
+      updateCollapsedStatus(); // Update collapsed status indicators
     });
 
     // Camera selection change
@@ -698,8 +827,12 @@
         recordingTime.classList.remove("hidden");
         
         recordingStartTime = Date.now();
-        recordingInterval = setInterval(updateRecordingTime, 1000);
+        recordingInterval = setInterval(() => {
+          updateRecordingTime();
+          updateCollapsedRecordingTime();
+        }, 1000);
         
+        updateCollapsedStatus(); // Update collapsed status indicators
         ipcRenderer.send("start-recording");
         status.textContent = "Recording...";
       } else {
@@ -720,6 +853,8 @@
         clearInterval(recordingInterval);
         recordingInterval = null;
       }
+      
+      updateCollapsedStatus(); // Update collapsed status indicators
       
       status.textContent = "Recording saved";
       setTimeout(() => {
@@ -792,6 +927,9 @@
 
     // Load cameras when page loads
     loadCameras();
+    
+    // Initialize collapsed status indicators
+    updateCollapsedStatus();
 
     // Reload cameras when devices change
     navigator.mediaDevices.addEventListener('devicechange', loadCameras);
