@@ -50,6 +50,10 @@
       width: auto;
       transition: opacity 0.2s;
     }
+    .logo-collapsed {
+      height: 40px;
+      width: auto;
+    }
     #headerLogo:hover {
       opacity: 1;
     }
@@ -469,6 +473,7 @@
     
     <!-- Collapsed Status Bar (only visible when collapsed) -->
     <div id="collapsed-status">
+      <img src="assets/icon.png" alt="Bloom" class="logo-collapsed"/>
       <span id="webcam-indicator" class="status-indicator" title="Webcam">📹</span>
       <span id="recording-indicator" class="status-indicator" title="Recording">⏺</span>
       <span id="recording-time-collapsed" class="status-time">0:00</span>
