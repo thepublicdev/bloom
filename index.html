@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <title>Bloom</title>
   <style>
+    :root {
+      --primary-color: #ffce07;
+      --primary-color-hover: #e6b806;
+      --primary-color-light: rgba(255, 206, 7, 0.1);
+      --primary-color-shadow: rgba(255, 206, 7, 0.3);
+    }
+    
     html, body {
       margin: 0;
       padding: 0;
@@ -68,10 +75,10 @@
     .resize-btn {
       width: 32px;
       height: 32px;
-      border: 1px solid #ffce07;
+      border: 1px solid var(--primary-color);
       border-radius: 50%;
       background: white;
-      color: #ffce07;
+      color: var(--primary-color);
       font-size: 10px;
       font-weight: 700;
       cursor: pointer;
@@ -81,14 +88,14 @@
       justify-content: center;
     }
     .resize-btn:hover {
-      background: #ffce07;
+      background: var(--primary-color);
       color: white;
       transform: scale(1.1);
     }
     .resize-btn.active {
-      background: #ffce07;
+      background: var(--primary-color);
       color: white;
-      box-shadow: 0 0 0 2px rgba(255, 206, 7, 0.3);
+      box-shadow: 0 0 0 2px var(--primary-color-shadow);
     }
     .resizer {
       width: 24px;
@@ -115,7 +122,7 @@
     }
     .resizer:hover {
       background: rgba(255,255,255,1);
-      border-color: #ffce07;
+      border-color: var(--primary-color);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       transform: scale(1.1);
     }
@@ -124,9 +131,9 @@
       transform: scale(1.05);
     }
     .resizer.resizing {
-      background: #ffce07;
+      background: var(--primary-color);
       color: white;
-      border-color: #e6b806;
+      border-color: var(--primary-color-hover);
       transform: scale(1.2);
     }
   </style>

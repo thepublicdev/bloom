@@ -4,6 +4,15 @@
   <meta charset="utf-8" />
   <title>Bloom Controls</title>
   <style>
+    :root {
+      --primary-color: #ffce07;
+      --primary-color-hover: #e6b806;
+      --primary-color-light: rgba(255, 206, 7, 0.1);
+      --primary-color-lighter: rgba(255, 206, 7, 0.05);
+      --primary-color-shadow: rgba(255, 206, 7, 0.2);
+      --primary-color-shadow-strong: rgba(255, 206, 7, 0.3);
+    }
+    
     html, body {
       margin: 0;
       padding: 0;
@@ -124,7 +133,7 @@
       background: #ddd;
     }
     .camera-toggle.on {
-      background: #ffce07;
+      background: var(--primary-color);
     }
     .camera-toggle::after {
       content: '';
@@ -156,12 +165,12 @@
       transition: all 0.2s;
     }
     .camera-dropdown:hover {
-      border-color: #ffce07;
+      border-color: var(--primary-color);
     }
     .camera-dropdown:focus {
       outline: none;
-      border-color: #ffce07;
-      box-shadow: 0 0 0 3px rgba(255, 206, 7, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-color-light);
     }
     .camera-dropdown option {
       padding: 8px;
@@ -176,7 +185,7 @@
     }
     .microphone-icon {
       font-size: 16px;
-      color: #ffce07;
+      color: var(--primary-color);
     }
     .microphone-label {
       font-size: 14px;
@@ -186,8 +195,8 @@
     .microphone-status {
       margin-left: auto;
       font-size: 12px;
-      color: #ffce07;
-      background: rgba(255, 206, 7, 0.1);
+      color: var(--primary-color);
+      background: var(--primary-color-light);
       padding: 4px 8px;
       border-radius: 12px;
     }
@@ -282,7 +291,7 @@
       background: #ddd;
     }
     .lock-toggle.on {
-      background: #ffce07;
+      background: var(--primary-color);
     }
     .lock-toggle::after {
       content: '';
@@ -304,9 +313,9 @@
     .resize-section {
       margin-bottom: 16px;
       padding: 12px;
-      background: rgba(255, 206, 7, 0.05);
+      background: var(--primary-color-lighter);
       border-radius: 12px;
-      border: 1px solid rgba(255, 206, 7, 0.1);
+      border: 1px solid var(--primary-color-light);
     }
     .resize-header {
       display: flex;
@@ -316,12 +325,12 @@
     }
     .resize-icon {
       font-size: 16px;
-      color: #ffce07;
+      color: var(--primary-color);
     }
     .resize-label {
       font-size: 14px;
       font-weight: 600;
-      color: #ffce07;
+      color: var(--primary-color);
       flex: 1;
     }
     .resize-controls {
@@ -332,10 +341,10 @@
     .resize-btn {
       flex: 1;
       height: 36px;
-      border: 2px solid #ffce07;
+      border: 2px solid var(--primary-color);
       border-radius: 8px;
       background: white;
-      color: #ffce07;
+      color: var(--primary-color);
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
@@ -345,17 +354,17 @@
       justify-content: center;
     }
     .resize-btn:hover {
-      border-color: #e6b806;
-      background: rgba(255, 206, 7, 0.1);
-      color: #e6b806;
+      border-color: var(--primary-color-hover);
+      background: var(--primary-color-light);
+      color: var(--primary-color-hover);
       transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(255, 206, 7, 0.2);
+      box-shadow: 0 4px 8px var(--primary-color-shadow);
     }
     .resize-btn.active {
-      background: #ffce07;
+      background: var(--primary-color);
       color: white;
-      border-color: #ffce07;
-      box-shadow: 0 2px 4px rgba(255, 206, 7, 0.3);
+      border-color: var(--primary-color);
+      box-shadow: 0 2px 4px var(--primary-color-shadow-strong);
     }
     .custom-resize {
       font-size: 16px;
@@ -399,7 +408,7 @@
     
     .status-indicator.active {
       opacity: 1;
-      color: #ffce07;
+      color: var(--primary-color);
     }
     
     .status-indicator.recording {
