@@ -22,6 +22,7 @@ mixpanel.init('6506b5250de6efccb495adaee0d8862d', {
 let overlayWin;
 let controlWin;
 let tray = null;
+let lastRecordingPath = null;
 
 function createWindows() {
   // Set up display media request handler for screen recording
@@ -225,6 +226,9 @@ function createWindows() {
 
       console.log(`Recording saved to: ${filePath}`);
 
+      // Store the last recording path
+      lastRecordingPath = filePath;
+
       // Notify control window
       controlWin.webContents.send("recording-saved", filePath);
     } catch (err) {
@@ -237,6 +241,17 @@ function createWindows() {
   ipcMain.on("open-recordings-folder", () => {
     const desktopPath = path.join(os.homedir(), "Desktop");
     shell.openPath(desktopPath);
+  });
+
+  // Open last recorded file in browser
+  ipcMain.on("open-recorded-file", () => {
+    if (lastRecordingPath && fs.existsSync(lastRecordingPath)) {
+      shell.openPath(lastRecordingPath);
+    } else {
+      // Fallback to opening the recordings folder if no specific file
+      const desktopPath = path.join(os.homedir(), "Desktop");
+      shell.openPath(desktopPath);
+    }
   });
 
   // If overlay is closed, close control window too

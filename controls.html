@@ -536,7 +536,7 @@
       </div>
       <div class="recording-time hidden" id="recordingTime">0:00</div>
       <div class="recording-link hidden" id="recordingLink">
-        <a href="#" id="openFolderLink" title="Open recordings folder">📁 Open recordings folder</a>
+        <a href="#" id="openFolderLink" title="Open recorded file">🎬 Open recorded file</a>
       </div>
 
       <!-- Lock Toggle Section -->
@@ -787,10 +787,10 @@
       ipcRenderer.send("set-lock", isLocked);
     });
 
-    // Open recordings folder
+    // Open recorded file
     openFolderLink.addEventListener("click", (e) => {
       e.preventDefault();
-      ipcRenderer.send("open-recordings-folder");
+      ipcRenderer.send("open-recorded-file");
     });
 
 
