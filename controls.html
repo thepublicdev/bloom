@@ -539,7 +539,7 @@
       <div class="microphone-section">
         <div class="microphone-header">
           <span class="microphone-icon">🎤</span>
-          <span class="microphone-label">Default - MacBook Pro Microphone</span>
+          <span class="microphone-label" id="microphoneLabel">Default - Detecting...</span>
           <span class="microphone-status">On</span>
         </div>
       </div>
@@ -577,6 +577,7 @@
     const status = document.getElementById("status");
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
+    const microphoneLabel = document.getElementById("microphoneLabel");
     
     // Collapsed status elements
     const webcamIndicator = document.getElementById("webcam-indicator");
@@ -687,40 +688,50 @@
       recordingTimeCollapsed.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    // Load available cameras
+    // Load available cameras and microphones
     async function loadCameras() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const audioDevices = devices.filter(device => device.kind === 'audioinput');
         
+        // Load cameras
         cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
         if (videoDevices.length === 0) {
           cameraStatus.textContent = "No Camera";
           cameraStatus.classList.add("off");
           cameraToggle.disabled = true;
           status.textContent = "No cameras available";
-          return;
-        }
-        
-        videoDevices.forEach((device, index) => {
-          const option = document.createElement('option');
-          option.value = device.deviceId;
-          option.textContent = device.label || `Camera ${index + 1}`;
-          cameraSelect.appendChild(option);
-        });
-        
-        // Set first camera as default
-        if (videoDevices.length > 0) {
+        } else {
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+          });
+          
+          // Set first camera as default
           cameraSelect.value = videoDevices[0].deviceId;
           cameraStatus.textContent = videoDevices[0].label || "Camera 1";
           cameraStatus.classList.remove("off");
           status.textContent = "Ready to record";
         }
+        
+        // Set default microphone label
+        if (audioDevices.length > 0) {
+          const defaultMic = audioDevices[0];
+          const micName = defaultMic.label || "Built-in Microphone";
+          microphoneLabel.textContent = `${micName}`;
+        } else {
+          microphoneLabel.textContent = "Default - No Microphone Available";
+        }
+        
       } catch (err) {
-        console.error("Error loading cameras:", err);
+        console.error("Error loading devices:", err);
         cameraStatus.textContent = "Camera Error";
         cameraStatus.classList.add("off");
-        status.textContent = "Camera issue detected";
+        microphoneLabel.textContent = "Default - Device Error";
+        status.textContent = "Device access issue detected";
         cameraToggle.disabled = true;
       }
     }
