@@ -63,7 +63,7 @@ function createWindows() {
     x: startX + startW - 320, // Position to extend left from overlay - updated width
     y: startY - 10, // Slightly above overlay
     width: 320, // Increased width for new design
-    height: 400, // Increased height for new layout
+    height: 500, // Increased height to accommodate all controls
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -129,6 +129,19 @@ function createWindows() {
     controlWin.setPosition(
       b.x + b.width - controlBounds.width,
       b.y - 10,
+      false
+    );
+  });
+
+  // Resize overlay window (called from controls when using preset sizes)
+  ipcMain.on("resize-overlay", (_, w, h) => {
+    overlayWin.setSize(Math.round(w), Math.round(h));
+    // Reposition controls to maintain alignment
+    const overlayBounds = overlayWin.getBounds();
+    const controlBounds = controlWin.getBounds();
+    controlWin.setPosition(
+      overlayBounds.x + overlayBounds.width - controlBounds.width,
+      overlayBounds.y - 10,
       false
     );
   });

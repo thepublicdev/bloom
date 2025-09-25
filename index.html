@@ -28,14 +28,43 @@
       -webkit-user-drag: none;
     }
     .resizer {
-      width: 16px;
-      height: 16px;
-      background: rgba(255,255,255,0.6);
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid rgba(0,0,0,0.1);
       border-radius: 50%;
       position: absolute;
-      right: -8px;
-      bottom: -8px;
+      right: -12px;
+      bottom: -12px;
       cursor: se-resize;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #666;
+    }
+    .resizer:before {
+      content: "⤡";
+      transform: rotate(-45deg);
+      font-weight: bold;
+    }
+    .resizer:hover {
+      background: rgba(255,255,255,1);
+      border-color: #007AFF;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transform: scale(1.1);
+    }
+    #wrapper:hover .resizer {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    .resizer.resizing {
+      background: #007AFF;
+      color: white;
+      border-color: #0056CC;
+      transform: scale(1.2);
     }
   </style>
 </head>
@@ -282,6 +311,7 @@
       e.stopPropagation();
       e.preventDefault();
       resizing = true;
+      resizer.classList.add("resizing");
       startScreenX = e.screenX;
       startScreenY = e.screenY;
       startW = window.innerWidth;
@@ -290,12 +320,15 @@
 
     window.addEventListener("mousemove", (e) => {
       if (!resizing) return;
-      let newW = Math.max(64, startW + (e.screenX - startScreenX));
-      let newH = Math.max(64, startH + (e.screenY - startScreenY));
+      let newW = Math.max(100, startW + (e.screenX - startScreenX)); // Increased minimum size
+      let newH = Math.max(100, startH + (e.screenY - startScreenY)); // Increased minimum size
       ipcRenderer.send("resize-window", newW, newH);
     });
 
-    window.addEventListener("mouseup", () => { resizing = false; });
+    window.addEventListener("mouseup", () => { 
+      resizing = false;
+      resizer.classList.remove("resizing");
+    });
 
     // Optional: ensure CSS stays circular on resize
     ipcRenderer.on("lock-changed", (_, value) => {

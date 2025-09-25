@@ -350,6 +350,67 @@
     .lock-toggle.on::after {
       left: 26px;
     }
+    .resize-section {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(0, 122, 255, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 122, 255, 0.1);
+    }
+    .resize-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .resize-icon {
+      font-size: 16px;
+      color: #007AFF;
+    }
+    .resize-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #007AFF;
+      flex: 1;
+    }
+    .resize-controls {
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+    }
+    .resize-btn {
+      flex: 1;
+      height: 36px;
+      border: 2px solid #007AFF;
+      border-radius: 8px;
+      background: white;
+      color: #007AFF;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .resize-btn:hover {
+      border-color: #0056CC;
+      background: rgba(0, 122, 255, 0.1);
+      color: #0056CC;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 122, 255, 0.2);
+    }
+    .resize-btn.active {
+      background: #007AFF;
+      color: white;
+      border-color: #007AFF;
+      box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
+    }
+    .custom-resize {
+      font-size: 16px;
+      min-width: 36px;
+      flex: 0;
+    }
     .status {
       text-align: center;
       font-size: 11px;
@@ -428,6 +489,20 @@
         </div>
       </div>
 
+      <!-- Resize Controls Section -->
+      <div class="resize-section" style="border: 2px solid #007AFF; background: rgba(0, 122, 255, 0.1);">
+        <div class="resize-header">
+          <span class="resize-icon">📏</span>
+          <span class="resize-label">WEBCAM SIZE</span>
+        </div>
+        <div class="resize-controls">
+          <button class="resize-btn" id="resizeSmall" title="Small">SMALL</button>
+          <button class="resize-btn" id="resizeMedium" title="Medium">MED</button>
+          <button class="resize-btn" id="resizeLarge" title="Large">LARGE</button>
+          <button class="resize-btn custom-resize" id="resizeCustom" title="Drag to resize">⤡</button>
+        </div>
+      </div>
+
       <div class="status" id="status">Camera issue detected</div>
     </div>
   </div>
@@ -444,6 +519,10 @@
     const status = document.getElementById("status");
     const toggleBtn = document.getElementById("toggleBtn");
     const box = document.getElementById("box");
+    const resizeSmall = document.getElementById("resizeSmall");
+    const resizeMedium = document.getElementById("resizeMedium");
+    const resizeLarge = document.getElementById("resizeLarge");
+    const resizeCustom = document.getElementById("resizeCustom");
     
     let isOverlayActive = false;
     let isCollapsed = false;
@@ -452,6 +531,7 @@
     let isLocked = false; // Changed default to false (unlocked)
     let recordingInterval;
     let recordingStartTime;
+    let currentSize = 'medium'; // Track current size
 
     // Drag functionality for controls window
     let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
@@ -516,7 +596,7 @@
         box.classList.remove("collapsed");
         toggleBtn.textContent = "×";
         toggleBtn.title = "Collapse controls";
-        ipcRenderer.send("resize-controls", 320, 400);
+        ipcRenderer.send("resize-controls", 320, 500);
       }
     });
 
@@ -619,6 +699,57 @@
       }
       
       ipcRenderer.send("set-lock", isLocked);
+    });
+
+    // Resize controls
+    function updateResizeButtons(activeButton) {
+      const buttons = [resizeSmall, resizeMedium, resizeLarge];
+      buttons.forEach(btn => btn.classList.remove("active"));
+      if (activeButton) {
+        activeButton.classList.add("active");
+      }
+    }
+
+    resizeSmall.addEventListener("click", () => {
+      currentSize = 'small';
+      updateResizeButtons(resizeSmall);
+      ipcRenderer.send("resize-overlay", 200, 200);
+      status.textContent = "Webcam resized to small";
+    });
+
+    resizeMedium.addEventListener("click", () => {
+      currentSize = 'medium';
+      updateResizeButtons(resizeMedium);
+      ipcRenderer.send("resize-overlay", 320, 320);
+      status.textContent = "Webcam resized to medium";
+    });
+
+    resizeLarge.addEventListener("click", () => {
+      currentSize = 'large';
+      updateResizeButtons(resizeLarge);
+      ipcRenderer.send("resize-overlay", 480, 480);
+      status.textContent = "Webcam resized to large";
+    });
+
+    resizeCustom.addEventListener("click", () => {
+      currentSize = 'custom';
+      updateResizeButtons(null);
+      if (isCameraOn) {
+        status.textContent = "Drag the resize handle on webcam to resize";
+      } else {
+        status.textContent = "Turn on camera to see resize handle";
+      }
+    });
+
+    // Set initial medium size as active
+    updateResizeButtons(resizeMedium);
+    
+    // Debug: Log that resize controls are initialized
+    console.log("Resize controls initialized:", {
+      small: resizeSmall,
+      medium: resizeMedium,
+      large: resizeLarge,
+      custom: resizeCustom
     });
 
     // Start/Stop recording
