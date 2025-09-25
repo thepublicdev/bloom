@@ -20,6 +20,32 @@ const mixpanel = Mixpanel.init('6506b5250de6efccb495adaee0d8862d', {
     geolocate: true,
 });
 
+// Get app metadata for analytics
+function getAppMetadata() {
+    return {
+        app_name: app.getName(),
+        app_version: app.getVersion(),
+        electron_version: process.versions.electron,
+        chrome_version: process.versions.chrome,
+        node_version: process.versions.node,
+        platform: process.platform,
+        arch: process.arch,
+        os_type: os.type(),
+        os_release: os.release(),
+        locale: app.getLocale(),
+    };
+}
+
+// Enhanced tracking function with automatic metadata
+function trackEvent(eventName, properties = {}) {
+    const metadata = getAppMetadata();
+    const combinedProperties = {
+        ...metadata,
+        ...properties
+    };
+    mixpanel.track(eventName, combinedProperties);
+}
+
 let overlayWin;
 let controlWin;
 let tray = null;
@@ -131,7 +157,7 @@ function createWindows() {
 
   // Resize overlay window (called from controls when using preset sizes)
   ipcMain.on("resize-overlay", (_, w, h) => {
-    mixpanel.track("resize-overlay", { width: w, height: h });
+    trackEvent("resize-overlay", { width: w, height: h });
     // Add extra height for resize controls positioned beneath the video
     const extraHeight = 80; // Space for controls positioned at bottom: -45px
     overlayWin.setSize(Math.round(w), Math.round(h + extraHeight));
@@ -171,14 +197,14 @@ function createWindows() {
   ipcMain.on("start-overlay", (_, cameraId) => {
     overlayWin.webContents.send("start-camera", cameraId);
     controlWin.webContents.send("overlay-status", true);
-    mixpanel.track("start-overlay");
+    trackEvent("start-overlay", { camera_id: cameraId });
   });
 
   // Stop overlay
   ipcMain.on("stop-overlay", () => {
     overlayWin.webContents.send("stop-camera");
     controlWin.webContents.send("overlay-status", false);
-    mixpanel.track("stop-overlay");
+    trackEvent("stop-overlay");
   });
 
   // Start screen recording
@@ -187,7 +213,7 @@ function createWindows() {
       // Send recording command to overlay window (which has access to desktopCapturer)
       overlayWin.webContents.send("start-screen-recording");
       controlWin.webContents.send("recording-status", true);
-      mixpanel.track("start-recording");
+      trackEvent("start-recording");
     } catch (err) {
       console.error("Error starting recording:", err);
       controlWin.webContents.send("recording-error", err.message);
@@ -198,7 +224,7 @@ function createWindows() {
   ipcMain.on("stop-recording", () => {
     overlayWin.webContents.send("stop-screen-recording");
     controlWin.webContents.send("recording-status", false);
-    mixpanel.track("stop-recording");
+    trackEvent("stop-recording");
   });
 
   // Handle when recording is ended by user via system controls
@@ -298,10 +324,14 @@ function createWindows() {
     { label: "Quit", click: () => app.quit() },
   ]);
   tray.setContextMenu(contextMenu);
+  
+  // Track app startup
+  trackEvent("app-started");
 }
 
 app.whenReady().then(createWindows);
 
 app.on("window-all-closed", () => {
+  trackEvent("app-quit");
   app.quit();
 });
