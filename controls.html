@@ -481,7 +481,7 @@
           Start Recording
         </button>
       </div>
-      <div class="recording-time hidden" id="recordingTime">5 min recording limit</div>
+      <div class="recording-time hidden" id="recordingTime">0:00</div>
 
       <!-- Lock Toggle Section -->
       <div class="lock-section">
@@ -733,16 +733,8 @@
       const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
       const minutes = Math.floor(elapsed / 60);
       const seconds = elapsed % 60;
-      const remaining = Math.max(0, 300 - elapsed); // 5 minute limit
-      const remainingMinutes = Math.floor(remaining / 60);
-      const remainingSeconds = remaining % 60;
       
-      recordingTime.textContent = `${remainingMinutes}:${remainingSeconds.toString().padStart(2, '0')} remaining`;
-      
-      if (remaining <= 0) {
-        stopRecording();
-        ipcRenderer.send("stop-recording");
-      }
+      recordingTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
     // Handle overlay status updates from main process
