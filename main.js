@@ -159,7 +159,12 @@ function createWindows() {
   ipcMain.on("resize-overlay", (_, w, h) => {
     // Add extra height for resize controls positioned beneath the video
     const extraHeight = 80; // Space for controls positioned at bottom: -45px
+    
+    // On Linux, we need to temporarily enable resizing for setSize() to work
+    overlayWin.setResizable(true);
     overlayWin.setSize(Math.round(w), Math.round(h + extraHeight));
+    overlayWin.setResizable(false);
+    
     // Reposition controls to maintain alignment to the right
     const overlayBounds = overlayWin.getBounds();
     controlWin.setPosition(
