@@ -1,918 +1,513 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Bloom Controls</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controls</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    :root {
-      --primary-color: #ffce07;
-      --primary-color-hover: #e6b806;
-      --primary-color-light: rgba(255, 206, 7, 0.1);
-      --primary-color-lighter: rgba(255, 206, 7, 0.05);
-      --primary-color-shadow: rgba(255, 206, 7, 0.2);
-      --primary-color-shadow-strong: rgba(255, 206, 7, 0.3);
-    }
-    
-    html, body {
+    * {
       margin: 0;
       padding: 0;
-      background: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      -webkit-user-select: none;
-    }
-    #box {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 16px;
-      min-width: 280px;
-      position: relative;
-      transition: all 0.3s ease;
-      color: #333;
-    }
-    #box.collapsed {
-      min-width: auto;
-      width: 48px;
-      height: 180px;
-      padding: 8px 0;
-      border-radius: 24px;
-      display: flex;
-      position: relative;
-    }
-    #header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      cursor: move;
-      padding: 4px;
-      border-radius: 8px;
-      transition: background 0.2s;
-    }
-    #header:hover {
-      background: rgba(0, 0, 0, 0.02);
-    }
-    #headerLogo {
-      height: 70px;
-      width: auto;
-      transition: opacity 0.2s;
-    }
-    .logo-collapsed {
-      height: 40px;
-      width: auto;
-    }
-    #headerLogo:hover {
-      opacity: 1;
-    }
-    #toggleBtn {
-      background: rgba(0, 0, 0, 0.05);
-      border: none;
-      color: #666;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    #toggleBtn:hover {
-      background: rgba(0, 0, 0, 0.1);
-      color: #333;
-    }
-    #content {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    #box.collapsed #content {
-      opacity: 0;
-      transform: scale(0.8);
-      pointer-events: none;
-      position: absolute;
-      visibility: hidden;
-    }
-    #box.collapsed #header {
-      margin: 0;
-      justify-content: center;
-    }
-    .camera-section {
-      margin-bottom: 16px;
-    }
-    .camera-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .camera-icon {
-      font-size: 16px;
-      color: #666;
-    }
-    .camera-status {
-      font-size: 14px;
-      font-weight: 500;
-      color: #333;
-    }
-    .camera-status.off {
-      color: #999;
-    }
-    .camera-toggle {
-      margin-left: auto;
-      width: 48px;
-      height: 24px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
-    }
-    .camera-toggle.off {
-      background: #ddd;
-    }
-    .camera-toggle.on {
-      background: var(--primary-color);
-    }
-    .camera-toggle::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: white;
-      top: 2px;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    .camera-toggle.off::after {
-      left: 2px;
-    }
-    .camera-toggle.on::after {
-      left: 26px;
-    }
-    .camera-dropdown {
-      margin-top: 8px;
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      background: white;
-      font-size: 14px;
-      color: #333;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .camera-dropdown:hover {
-      border-color: var(--primary-color);
-    }
-    .camera-dropdown:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px var(--primary-color-light);
-    }
-    .camera-dropdown option {
-      padding: 8px;
-    }
-    .microphone-section {
-      margin-bottom: 16px;
-    }
-    .microphone-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .microphone-icon {
-      font-size: 16px;
-      color: var(--primary-color);
-    }
-    .microphone-label {
-      font-size: 14px;
-      font-weight: 500;
-      color: #333;
-    }
-    .microphone-status {
-      margin-left: auto;
-      font-size: 12px;
-      color: var(--primary-color);
-      background: var(--primary-color-light);
-      padding: 4px 8px;
-      border-radius: 12px;
-    }
-    .recording-section {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-    }
-    .record-btn {
-      width: 95%;
-      min-width: 120px;
-      height: 44px;
-      border: none;
-      border-radius: 22px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s;
-      background: #ff4757;
-      color: white;
-      position: relative;
-      padding: 0 20px;
-    }
-    .record-btn:hover {
-      background: #ff3838;
-      transform: scale(1.05);
-    }
-    .record-btn.recording {
-      background: #ff4757;
-      animation: pulse 2s infinite;
-    }
-    .record-btn.recording::after {
-      content: '';
-      position: absolute;
-      top: -4px;
-      left: -4px;
-      right: -4px;
-      bottom: -4px;
-      border: 2px solid #ff4757;
-      border-radius: 26px;
-      opacity: 0.3;
-      animation: ripple 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    @keyframes ripple {
-      0% { transform: scale(1); opacity: 0.3; }
-      100% { transform: scale(1.2); opacity: 0; }
-    }
-    .recording-time {
-      text-align: center;
-      font-size: 12px;
-      color: #ff4757;
-      font-weight: 500;
-      margin-top: 8px;
-    }
-    .recording-link {
-      text-align: center;
-      margin-top: 8px;
-    }
-    .recording-link a {
-      color: var(--primary-color);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: all 0.2s;
-      display: inline-block;
-    }
-    .recording-link a:hover {
-      background: var(--primary-color-light);
-      color: var(--primary-color-hover);
-    }
-    .lock-section {
-      margin-bottom: 16px;
-    }
-    .lock-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .lock-icon {
-      font-size: 16px;
-      color: #666;
-    }
-    .lock-label {
-      font-size: 14px;
-      font-weight: 500;
-      color: #333;
-      flex: 1;
-    }
-    .lock-toggle {
-      margin-left: auto;
-      width: 48px;
-      height: 24px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
-    }
-    .lock-toggle.off {
-      background: #ddd;
-    }
-    .lock-toggle.on {
-      background: var(--primary-color);
-    }
-    .lock-toggle::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: white;
-      top: 2px;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    .lock-toggle.off::after {
-      left: 2px;
-    }
-    .lock-toggle.on::after {
-      left: 26px;
-    }
-    .resize-section {
-      margin-bottom: 16px;
-      padding: 12px;
-      background: var(--primary-color-lighter);
-      border-radius: 12px;
-      border: 1px solid var(--primary-color-light);
-    }
-    .resize-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .resize-icon {
-      font-size: 16px;
-      color: var(--primary-color);
-    }
-    .resize-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--primary-color);
-      flex: 1;
-    }
-    .resize-controls {
-      display: flex;
-      gap: 6px;
-      justify-content: space-between;
-    }
-    .resize-btn {
-      flex: 1;
-      height: 36px;
-      border: 2px solid var(--primary-color);
-      border-radius: 8px;
-      background: white;
-      color: var(--primary-color);
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .resize-btn:hover {
-      border-color: var(--primary-color-hover);
-      background: var(--primary-color-light);
-      color: var(--primary-color-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px var(--primary-color-shadow);
-    }
-    .resize-btn.active {
-      background: var(--primary-color);
-      color: white;
-      border-color: var(--primary-color);
-      box-shadow: 0 2px 4px var(--primary-color-shadow-strong);
-    }
-    .custom-resize {
-      font-size: 16px;
-      min-width: 36px;
-      flex: 0;
-    }
-    .status {
-      text-align: center;
-      font-size: 11px;
-      color: #999;
-      background: rgba(0, 0, 0, 0.03);
-      padding: 8px;
-      border-radius: 8px;
-      margin-top: 8px;
-    }
-    .hidden {
-      display: none;
-    }
-    
-    /* Collapsed Status Bar Styles */
-    #collapsed-status {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      font-size: 14px;
-      height: 100%;
-      width: 100%;
-      padding: 32px 0 12px 0; /* Top padding to avoid expand button */
       box-sizing: border-box;
     }
-    
-    .status-indicator {
-      font-size: 18px;
-      opacity: 0.3;
-      transition: opacity 0.2s;
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    #strip {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 72px;
+      box-sizing: border-box;
+      background: rgba(25, 25, 35, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: -4px 0 32px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 4px;
+    }
+
+    .strip-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, color 0.15s ease;
+      position: relative;
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .strip-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    .strip-btn svg {
+      width: 22px;
+      height: 22px;
+      pointer-events: none;
+    }
+
+    .btn-active {
+      background: rgba(255, 206, 7, 0.15) !important;
+      color: #ffce07 !important;
+    }
+
+    .btn-active:hover {
+      background: rgba(255, 206, 7, 0.22) !important;
+      color: #ffce07 !important;
+    }
+
+    .btn-recording {
+      background: rgba(255, 71, 87, 0.2) !important;
+      color: #ff4757 !important;
+    }
+
+    .btn-recording:hover {
+      background: rgba(255, 71, 87, 0.28) !important;
+      color: #ff4757 !important;
+    }
+
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.55); }
+      70%  { box-shadow: 0 0 0 6px rgba(255, 71, 87, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+    }
+
+    .btn-recording {
+      animation: pulse-ring 1.4s ease-out infinite;
+    }
+
+    #recTimer {
+      width: 100%;
+      height: 18px;
       text-align: center;
-      color: #666;
-    }
-    
-    .status-indicator.active {
-      opacity: 1;
-      color: var(--primary-color);
-    }
-    
-    .status-indicator.recording {
-      color: #ff4757;
-      animation: pulse 2s infinite;
-    }
-    
-    .status-time {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
+      font-family: 'SF Mono', 'Fira Mono', 'Consolas', monospace;
       color: #ff4757;
-      min-width: 30px;
-      text-align: center;
-      opacity: 0.9;
-      display: none;
+      visibility: hidden;
+      line-height: 18px;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
     }
-    
-    /* Collapsed state visibility rules */
-    #box.collapsed #collapsed-status {
+
+    #sizeBtn .size-label {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    /* ── Popups ── */
+    .device-popup {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 248px;   /* 320 - 72 */
+      bottom: 0;
+      background: rgba(20, 20, 30, 0.97);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 16px 0 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-right: none;
+      box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
+      padding: 12px 8px;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .device-popup.open {
       display: flex;
     }
-    
-    #box:not(.collapsed) #collapsed-status {
-      display: none;
-    }
-    
-    #box.collapsed #content {
-      display: none;
-    }
-    
-    #box.collapsed #header {
+
+    .device-popup::after {
+      content: '';
       position: absolute;
-      top: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-      margin: 0;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 12px;
-      padding: 4px;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-left: 8px solid rgba(20, 20, 30, 0.97);
     }
-    
-    #box.collapsed #headerLogo {
-      display: none;
+
+    .popup-title {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 8px 8px;
     }
-    
-    #box.collapsed #toggleBtn {
-      width: 20px;
-      height: 20px;
-      font-size: 14px;
-      opacity: 0.8;
+
+    .device-item {
+      width: 100%;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 8px;
       border: none;
-      border-radius: 6px;
       background: transparent;
-      color: #333;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 13px;
+      cursor: pointer;
+      display: block;
+      transition: background 0.12s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    
-    #box.collapsed #toggleBtn:hover {
-      opacity: 1;
-      background: rgba(0, 0, 0, 0.05);
+
+    .device-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .device-item.device-selected {
+      color: #ffce07;
     }
   </style>
 </head>
 <body>
-  <div id="box">
-    <div id="header">
-      <img src="assets/bloom-app-header.png" alt="Bloom" id="headerLogo" />
-      <button id="toggleBtn" title="Toggle controls">×</button>
-    </div>
-    
-    <!-- Collapsed Status Bar (only visible when collapsed) -->
-    <div id="collapsed-status">
-      <img src="assets/icon.png" alt="Bloom" class="logo-collapsed"/>
-      <span id="webcam-indicator" class="status-indicator" title="Webcam">📹</span>
-      <span id="recording-indicator" class="status-indicator" title="Recording">⏺</span>
-      <span id="recording-time-collapsed" class="status-time">0:00</span>
-    </div>
-    
-    <div id="content">
-      <!-- Camera Section -->
-      <div class="camera-section">
-        <div class="camera-header">
-          <span class="camera-icon">📹</span>
-          <span class="camera-status" id="cameraStatus">No Camera</span>
-          <button class="camera-toggle off" id="cameraToggle"></button>
-        </div>
-        <select class="camera-dropdown" id="cameraSelect" style="display: none;">
-          <option value="">Select Camera...</option>
-        </select>
-      </div>
 
-      <!-- Microphone Section -->
-      <div class="microphone-section">
-        <div class="microphone-header">
-          <span class="microphone-icon">🎤</span>
-          <span class="microphone-label" id="microphoneLabel">Default - Detecting...</span>
-          <span class="microphone-status">On</span>
-        </div>
-      </div>
+  <!-- Camera popup -->
+  <div class="device-popup" id="cameraPopup">
+    <div class="popup-title">Camera</div>
+    <div id="cameraList"></div>
+  </div>
 
-      <!-- Recording Section -->
-      <div class="recording-section">
-        <button class="record-btn" id="recordBtn" title="Start Recording">
-          Start Recording
-        </button>
-      </div>
-      <div class="recording-time hidden" id="recordingTime">0:00</div>
-      <div class="recording-link hidden" id="recordingLink">
-        <a href="#" id="openFolderLink" title="Open recorded file">🎬 Open recorded file</a>
-      </div>
+  <!-- Mic popup -->
+  <div class="device-popup" id="micPopup">
+    <div class="popup-title">Microphone</div>
+    <div id="micList"></div>
+  </div>
 
-      <!-- Lock Toggle Section -->
-      <div class="lock-section">
-        <div class="lock-header">
-          <span class="lock-icon">🔒</span>
-          <span class="lock-label">Lock Position</span>
-          <button class="lock-toggle off" id="lockToggle"></button>
-        </div>
-      </div>
+  <!-- Main strip -->
+  <div id="strip">
+    <button class="strip-btn" id="recordBtn" title="Record">
+      <i data-lucide="circle"></i>
+    </button>
 
-      <div class="status" id="status">Camera issue detected</div>
-    </div>
+    <div id="recTimer">0:00</div>
+
+    <button class="strip-btn" id="cameraBtn" title="Camera">
+      <i data-lucide="camera"></i>
+    </button>
+
+    <button class="strip-btn" id="micBtn" title="Microphone">
+      <i data-lucide="mic"></i>
+    </button>
+
+    <button class="strip-btn" id="shapeBtn" title="Shape">
+      <i data-lucide="circle"></i>
+    </button>
+
+    <button class="strip-btn btn-active" id="sizeBtn" title="Size">
+      <span class="size-label">M</span>
+    </button>
+
+    <button class="strip-btn" id="settingsBtn" title="Settings">
+      <i data-lucide="settings"></i>
+    </button>
   </div>
 
   <script>
-    const { ipcRenderer } = require("electron");
-    const cameraSelect = document.getElementById("cameraSelect");
-    const cameraStatus = document.getElementById("cameraStatus");
-    const cameraToggle = document.getElementById("cameraToggle");
-    const lockToggle = document.getElementById("lockToggle");
-    const recordBtn = document.getElementById("recordBtn");
-    const recordingTime = document.getElementById("recordingTime");
-    const recordingLink = document.getElementById("recordingLink");
-    const openFolderLink = document.getElementById("openFolderLink");
-    const status = document.getElementById("status");
-    const toggleBtn = document.getElementById("toggleBtn");
-    const box = document.getElementById("box");
-    const microphoneLabel = document.getElementById("microphoneLabel");
-    
-    // Collapsed status elements
-    const webcamIndicator = document.getElementById("webcam-indicator");
-    const recordingIndicator = document.getElementById("recording-indicator");
-    const recordingTimeCollapsed = document.getElementById("recording-time-collapsed");
-    
-    let isOverlayActive = false;
-    let isCollapsed = false;
-    let isRecording = false;
-    let isCameraOn = false;
-    let isLocked = false; // Changed default to false (unlocked)
-    let recordingInterval;
-    let recordingStartTime;
+    const { ipcRenderer } = require('electron');
 
-    // Drag functionality for controls window
-    let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
+    // ── State ──────────────────────────────────────────────────────────────────
+    let isRecording        = false;
+    let isCameraOn         = false;
+    let currentShape       = 'circle';   // 'circle' | 'square' | 'vertical'
+    let currentSize        = 'M';        // 'S' | 'M' | 'L'
+    let selectedCameraId   = null;
+    let selectedMicId      = null;
+    let recordingInterval  = null;
+    let recordingStartTime = null;
 
-    // Make the header the primary drag handle
-    const header = document.getElementById("header");
-    header.addEventListener("mousedown", (e) => {
-      if (isLocked) return; // Don't drag when locked
-      if (isCollapsed) return; // Don't drag when collapsed (too small)
-      
-      // Don't start drag if clicking the toggle button
-      if (e.target.id === 'toggleBtn') {
-        return;
-      }
-      
-      dragging = true;
-      dragOffsetX = e.clientX;
-      dragOffsetY = e.clientY;
-      e.preventDefault();
-    });
+    const shapeIconMap = {
+      circle:   'circle',
+      square:   'square',
+      vertical: 'rectangle-vertical',
+    };
 
-    // Also allow dragging from the main box area (avoiding interactive elements)
-    box.addEventListener("mousedown", (e) => {
-      if (isLocked) return;
-      
-      // Don't start drag on interactive elements
-      if (e.target.tagName === 'BUTTON' || 
-          e.target.tagName === 'SELECT' || 
-          e.target.tagName === 'OPTION' ||
-          e.target.closest('#header')) { // Skip if already handled by header
-        return;
-      }
-      
-      dragging = true;
-      dragOffsetX = e.clientX;
-      dragOffsetY = e.clientY;
-      e.preventDefault();
-    });
+    // ── Element refs ───────────────────────────────────────────────────────────
+    const recordBtn   = document.getElementById('recordBtn');
+    const recTimer    = document.getElementById('recTimer');
+    const cameraBtn   = document.getElementById('cameraBtn');
+    const micBtn      = document.getElementById('micBtn');
+    const shapeBtn    = document.getElementById('shapeBtn');
+    const sizeBtn     = document.getElementById('sizeBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const cameraPopup = document.getElementById('cameraPopup');
+    const micPopup    = document.getElementById('micPopup');
+    const cameraList  = document.getElementById('cameraList');
+    const micList     = document.getElementById('micList');
 
-    window.addEventListener("mousemove", (e) => {
-      if (!dragging) return;
-      // Calculate new position based on screen coordinates
-      const newX = e.screenX - dragOffsetX;
-      const newY = e.screenY - dragOffsetY;
-      ipcRenderer.send("move-controls", newX, newY);
-    });
-
-    window.addEventListener("mouseup", () => {
-      dragging = false;
-    });
-
-    // Toggle collapse/expand
-    toggleBtn.addEventListener("click", () => {
-      isCollapsed = !isCollapsed;
-      if (isCollapsed) {
-        box.classList.add("collapsed");
-        toggleBtn.textContent = "▶";
-        toggleBtn.title = "Expand controls";
-        ipcRenderer.send("resize-controls", 68, 200); // Updated dimensions for better proportions
-        updateCollapsedStatus(); // Update status indicators when collapsed
-      } else {
-        box.classList.remove("collapsed");
-        toggleBtn.textContent = "×";
-        toggleBtn.title = "Collapse controls";
-        ipcRenderer.send("resize-controls", 320, 500);
-      }
-    });
-
-    // Update collapsed status indicators
-    function updateCollapsedStatus() {
-      // Update webcam indicator
-      if (isCameraOn) {
-        webcamIndicator.classList.add("active");
-      } else {
-        webcamIndicator.classList.remove("active");
-      }
-      
-      // Update recording indicator
-      if (isRecording) {
-        recordingIndicator.classList.add("active", "recording");
-        recordingTimeCollapsed.style.display = "block";
-      } else {
-        recordingIndicator.classList.remove("active", "recording");
-        recordingTimeCollapsed.style.display = "none";
-      }
-    }
-    
-    function updateCollapsedRecordingTime() {
-      if (!isRecording) return;
-      
-      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-      const minutes = Math.floor(elapsed / 60);
-      const seconds = elapsed % 60;
-      
-      recordingTimeCollapsed.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
-    // Load available cameras and microphones
-    async function loadCameras() {
+    function reIcon(btn, iconName) {
+      btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+      lucide.createIcons();
+    }
+
+    // ── Popup open/close ───────────────────────────────────────────────────────
+    let activePopup = null;
+
+    function openPopup(popup, btn) {
+      // Close any open popup first
+      if (activePopup && activePopup !== popup) {
+        activePopup.classList.remove('open');
+      }
+      if (popup.classList.contains('open')) {
+        popup.classList.remove('open');
+        activePopup = null;
+        ipcRenderer.send('hide-device-popup');
+        return;
+      }
+      // Position popup vertically aligned to button
+      const rect = btn.getBoundingClientRect();
+      const popupHeight = Math.min(popup.scrollHeight || 200, 400);
+      // Clamp top so popup doesn't go off screen
+      const winH = window.innerHeight;
+      let top = rect.top;
+      if (top + popupHeight > winH) top = Math.max(0, winH - popupHeight);
+      popup.style.top = top + 'px';
+      popup.style.bottom = 'auto';
+      popup.style.height = 'auto';
+
+      popup.classList.add('open');
+      activePopup = popup;
+      ipcRenderer.send('show-device-popup');
+    }
+
+    function closeAllPopups() {
+      if (activePopup) {
+        activePopup.classList.remove('open');
+        activePopup = null;
+        ipcRenderer.send('hide-device-popup');
+      }
+    }
+
+    // ── Device loading ─────────────────────────────────────────────────────────
+    async function loadDevices() {
       try {
+        // Request permissions first so labels are populated
+        await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+          .catch(() => {});
+
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        const audioDevices = devices.filter(device => device.kind === 'audioinput');
-        
-        // Load cameras
-        cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
-        if (videoDevices.length === 0) {
-          cameraStatus.textContent = "No Camera";
-          cameraStatus.classList.add("off");
-          cameraToggle.disabled = true;
-          status.textContent = "No cameras available";
-        } else {
-          videoDevices.forEach((device, index) => {
-            const option = document.createElement('option');
-            option.value = device.deviceId;
-            option.textContent = device.label || `Camera ${index + 1}`;
-            cameraSelect.appendChild(option);
-          });
-          
-          // Set first camera as default
-          cameraSelect.value = videoDevices[0].deviceId;
-          cameraStatus.textContent = videoDevices[0].label || "Camera 1";
-          cameraStatus.classList.remove("off");
-          status.textContent = "Ready to record";
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        const audioDevices = devices.filter(d => d.kind === 'audioinput');
+
+        // Preserve current selections if still available
+        const camIds = videoDevices.map(d => d.deviceId);
+        const micIds = audioDevices.map(d => d.deviceId);
+
+        if (!selectedCameraId || !camIds.includes(selectedCameraId)) {
+          selectedCameraId = videoDevices[0]?.deviceId ?? null;
         }
-        
-        // Set default microphone label
-        if (audioDevices.length > 0) {
-          const defaultMic = audioDevices[0];
-          const micName = defaultMic.label || "Built-in Microphone";
-          microphoneLabel.textContent = `${micName}`;
-        } else {
-          microphoneLabel.textContent = "Default - No Microphone Available";
+        if (!selectedMicId || !micIds.includes(selectedMicId)) {
+          selectedMicId = audioDevices[0]?.deviceId ?? null;
         }
-        
+
+        renderDeviceList(cameraList, videoDevices, selectedCameraId, (id) => {
+          selectedCameraId = id;
+          if (isCameraOn) {
+            ipcRenderer.send('start-overlay', selectedCameraId);
+          }
+          closeAllPopups();
+        });
+
+        renderDeviceList(micList, audioDevices, selectedMicId, (id) => {
+          selectedMicId = id;
+          ipcRenderer.send('start-mic', selectedMicId);
+          closeAllPopups();
+        });
+
+        // Mic is always "active" once a device exists
+        if (selectedMicId) {
+          micBtn.classList.add('btn-active');
+        }
+
       } catch (err) {
-        console.error("Error loading devices:", err);
-        cameraStatus.textContent = "Camera Error";
-        cameraStatus.classList.add("off");
-        microphoneLabel.textContent = "Default - Device Error";
-        status.textContent = "Device access issue detected";
-        cameraToggle.disabled = true;
+        console.error('loadDevices error:', err);
       }
     }
 
-    // Camera toggle
-    cameraToggle.addEventListener("click", () => {
-      if (cameraToggle.disabled) return;
-      
-      isCameraOn = !isCameraOn;
-      
-      if (isCameraOn) {
-        cameraToggle.classList.remove("off");
-        cameraToggle.classList.add("on");
-        cameraSelect.style.display = "block";
-        
-        const selectedCamera = cameraSelect.value;
-        if (selectedCamera) {
-          ipcRenderer.send("start-overlay", selectedCamera);
-          isOverlayActive = true;
-          status.textContent = "Camera active";
-        }
-      } else {
-        cameraToggle.classList.remove("on");
-        cameraToggle.classList.add("off");
-        cameraSelect.style.display = "none";
-        
-        if (isOverlayActive) {
-          ipcRenderer.send("stop-overlay");
-          isOverlayActive = false;
-        }
-        status.textContent = "Camera off";
+    function renderDeviceList(container, devices, selectedId, onSelect) {
+      container.innerHTML = '';
+      if (devices.length === 0) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:8px 12px;font-size:13px;color:rgba(255,255,255,0.35)';
+        empty.textContent = 'No devices found';
+        container.appendChild(empty);
+        return;
       }
-      
-      updateCollapsedStatus(); // Update collapsed status indicators
-    });
+      devices.forEach((device, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'device-item' + (device.deviceId === selectedId ? ' device-selected' : '');
+        btn.title = device.label || `Device ${i + 1}`;
+        btn.textContent = (device.deviceId === selectedId ? '✓ ' : '') +
+          (device.label || `Device ${i + 1}`);
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onSelect(device.deviceId);
+        });
+        container.appendChild(btn);
+      });
+    }
 
-    // Camera selection change
-    cameraSelect.addEventListener("change", () => {
-      if (isCameraOn && cameraSelect.value) {
-        ipcRenderer.send("stop-overlay");
-        setTimeout(() => {
-          ipcRenderer.send("start-overlay", cameraSelect.value);
-          status.textContent = "Camera switched";
-        }, 100);
-      }
-      
-      if (cameraSelect.value) {
-        const selectedOption = cameraSelect.options[cameraSelect.selectedIndex];
-        cameraStatus.textContent = selectedOption.textContent;
-      }
-    });
-
-    // Lock toggle
-    lockToggle.addEventListener("click", () => {
-      isLocked = !isLocked;
-      
-      if (isLocked) {
-        lockToggle.classList.remove("off");
-        lockToggle.classList.add("on");
-      } else {
-        lockToggle.classList.remove("on");
-        lockToggle.classList.add("off");
-      }
-      
-      ipcRenderer.send("set-lock", isLocked);
-    });
-
-    // Open recorded file
-    openFolderLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      ipcRenderer.send("open-recorded-file");
-    });
-
-
-
-    // Start/Stop recording
-    recordBtn.addEventListener("click", () => {
-      if (!isRecording) {
-        // Start recording
-        isRecording = true;
-        recordBtn.classList.add("recording");
-        recordBtn.textContent = "Stop Recording";
-        recordBtn.title = "Stop Recording";
-        recordingTime.classList.remove("hidden");
-        recordingLink.classList.add("hidden"); // Hide the folder link when starting new recording
-        
-        recordingStartTime = Date.now();
-        recordingInterval = setInterval(() => {
-          updateRecordingTime();
-          updateCollapsedRecordingTime();
-        }, 1000);
-        
-        updateCollapsedStatus(); // Update collapsed status indicators
-        ipcRenderer.send("start-recording");
-        status.textContent = "Recording...";
-      } else {
-        // Stop recording
-        stopRecording();
-        ipcRenderer.send("stop-recording");
-      }
-    });
+    // ── Record ─────────────────────────────────────────────────────────────────
+    function startRecording() {
+      isRecording = true;
+      ipcRenderer.send('start-recording');
+      reIcon(recordBtn, 'square');
+      recordBtn.classList.add('btn-recording');
+      recTimer.style.visibility = 'visible';
+      recordingStartTime = Date.now();
+      recTimer.textContent = '0:00';
+      recordingInterval = setInterval(() => {
+        recTimer.textContent = formatTime(Date.now() - recordingStartTime);
+      }, 500);
+    }
 
     function stopRecording() {
       isRecording = false;
-      recordBtn.classList.remove("recording");
-      recordBtn.textContent = "Start Recording";
-      recordBtn.title = "Start Recording";
-      recordingTime.classList.add("hidden");
-      
-      if (recordingInterval) {
-        clearInterval(recordingInterval);
-        recordingInterval = null;
-      }
-      
-      updateCollapsedStatus(); // Update collapsed status indicators
-      
-      status.textContent = "Recording saved";
-      recordingLink.classList.remove("hidden"); // Show the folder link
-      setTimeout(() => {
-        status.textContent = isCameraOn ? "Camera active" : "Ready to record";
-      }, 2000);
+      ipcRenderer.send('stop-recording');
+      reIcon(recordBtn, 'circle');
+      recordBtn.classList.remove('btn-recording');
+      recTimer.style.visibility = 'hidden';
+      recTimer.textContent = '0:00';
+      clearInterval(recordingInterval);
+      recordingInterval = null;
+      recordingStartTime = null;
     }
 
-    function updateRecordingTime() {
-      if (!isRecording) return;
-      
-      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-      const minutes = Math.floor(elapsed / 60);
-      const seconds = elapsed % 60;
-      
-      recordingTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    // Handle overlay status updates from main process
-    ipcRenderer.on("overlay-status", (_, active) => {
-      isOverlayActive = active;
-      if (!active && isCameraOn) {
-        // Camera was turned off externally
-        isCameraOn = false;
-        cameraToggle.classList.remove("on");
-        cameraToggle.classList.add("off");
-        cameraSelect.style.display = "none";
-        status.textContent = "Camera off";
-      }
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) stopRecording();
+      else startRecording();
     });
 
-    // Handle recording status updates
-    ipcRenderer.on("recording-status", (_, recording) => {
-      if (!recording && isRecording) {
-        stopRecording();
-      }
-    });
-
-    // Handle recording saved notification
-    ipcRenderer.on("recording-saved", (_, filePath) => {
-      status.textContent = `Recording saved to Desktop`;
-    });
-
-    // Handle recording errors
-    ipcRenderer.on("recording-error", (_, error) => {
-      status.textContent = `Recording error: ${error}`;
-      if (isRecording) {
-        stopRecording();
-      }
-    });
-
-    // Handle when user ends recording via system controls
-    ipcRenderer.on("recording-ended-by-user", () => {
-      if (isRecording) {
-        stopRecording();
-      }
-    });
-
-    // Handle lock state changes from main process
-    ipcRenderer.on("lock-changed", (_, locked) => {
-      isLocked = !!locked;
-      if (isLocked) {
-        lockToggle.classList.remove("off");
-        lockToggle.classList.add("on");
+    // ── Camera ─────────────────────────────────────────────────────────────────
+    cameraBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!isCameraOn) {
+        isCameraOn = true;
+        ipcRenderer.send('start-overlay', selectedCameraId);
+        cameraBtn.classList.add('btn-active');
+        // Also open popup to confirm/switch device
+        openPopup(cameraPopup, cameraBtn);
       } else {
-        lockToggle.classList.remove("on");
-        lockToggle.classList.add("off");
+        openPopup(cameraPopup, cameraBtn);
       }
     });
 
-    // Load cameras when page loads
-    loadCameras();
-    
-    // Initialize collapsed status indicators
-    updateCollapsedStatus();
+    // ── Mic ────────────────────────────────────────────────────────────────────
+    micBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPopup(micPopup, micBtn);
+    });
 
-    // Reload cameras when devices change
-    navigator.mediaDevices.addEventListener('devicechange', loadCameras);
+    // ── Shape ──────────────────────────────────────────────────────────────────
+    const shapeOrder = ['circle', 'square', 'vertical'];
+
+    shapeBtn.addEventListener('click', () => {
+      const idx = shapeOrder.indexOf(currentShape);
+      currentShape = shapeOrder[(idx + 1) % shapeOrder.length];
+      reIcon(shapeBtn, shapeIconMap[currentShape]);
+      ipcRenderer.send('set-shape', currentShape);
+    });
+
+    // ── Size ───────────────────────────────────────────────────────────────────
+    const sizeOrder = ['S', 'M', 'L'];
+
+    sizeBtn.addEventListener('click', () => {
+      const idx = sizeOrder.indexOf(currentSize);
+      currentSize = sizeOrder[(idx + 1) % sizeOrder.length];
+      sizeBtn.querySelector('.size-label').textContent = currentSize;
+      ipcRenderer.send('set-size', currentSize);
+    });
+
+    // ── Settings ───────────────────────────────────────────────────────────────
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllPopups();
+      ipcRenderer.send('open-settings-window');
+    });
+
+    // ── Popup dismiss on outside click ─────────────────────────────────────────
+    document.addEventListener('click', (e) => {
+      if (activePopup && !e.target.closest('.device-popup') && !e.target.closest('#cameraBtn') && !e.target.closest('#micBtn')) {
+        closeAllPopups();
+      }
+    });
+
+    // ── IPC listeners ──────────────────────────────────────────────────────────
+    ipcRenderer.on('recording-status', (_, recording) => {
+      if (!recording && isRecording) stopRecording();
+    });
+
+    ipcRenderer.on('recording-saved', (_, filePath) => {
+      // Optional: could show a brief toast here
+    });
+
+    ipcRenderer.on('recording-error', (_, err) => {
+      console.error('Recording error:', err);
+      if (isRecording) stopRecording();
+    });
+
+    ipcRenderer.on('recording-ended-by-user', () => {
+      if (isRecording) stopRecording();
+    });
+
+    ipcRenderer.on('overlay-status', (_, active) => {
+      if (!active) {
+        isCameraOn = false;
+        cameraBtn.classList.remove('btn-active');
+      }
+    });
+
+    ipcRenderer.on('save-folder-chosen', (_, folder) => {
+      // folder confirmed — no UI update needed in strip
+      console.log('Save folder set to:', folder);
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadDevices();
+      navigator.mediaDevices.addEventListener('devicechange', loadDevices);
+    });
   </script>
 </body>
 </html>

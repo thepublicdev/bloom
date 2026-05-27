@@ -26,7 +26,6 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      padding-bottom: 60px;
       box-sizing: border-box;
       opacity: 0;
       visibility: hidden;
@@ -50,52 +49,6 @@
       display: block;
       box-shadow: 0 0 12px rgba(0,0,0,0.45);
       -webkit-user-drag: none;
-    }
-    .resize-controls {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 4px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 6px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      opacity: 1;
-      transition: all 0.3s ease;
-      pointer-events: all;
-      z-index: 1000;
-    }
-    #wrapper:hover .resize-controls {
-      transform: translateX(-50%) translateY(-5px);
-    }
-    .resize-btn {
-      width: 32px;
-      height: 32px;
-      border: 1px solid var(--primary-color);
-      border-radius: 50%;
-      background: white;
-      color: var(--primary-color);
-      font-size: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .resize-btn:hover {
-      background: var(--primary-color);
-      color: white;
-      transform: scale(1.1);
-    }
-    .resize-btn.active {
-      background: var(--primary-color);
-      color: white;
-      box-shadow: 0 0 0 2px var(--primary-color-shadow);
     }
     .resizer {
       width: 24px;
@@ -144,13 +97,6 @@
       <video autoplay playsinline muted></video>
       <div class="resizer" title="Resize"></div>
     </div>
-    
-    <!-- Resize Controls beneath webcam -->
-    <div class="resize-controls">
-      <button class="resize-btn" id="resizeSmallOverlay" title="Small">S</button>
-      <button class="resize-btn active" id="resizeMediumOverlay" title="Medium">M</button>
-      <button class="resize-btn" id="resizeLargeOverlay" title="Large">L</button>
-    </div>
   </div>
 
   <script>
@@ -158,59 +104,47 @@
     const video = document.querySelector("video");
     const wrapper = document.getElementById("wrapper");
     const resizer = document.querySelector(".resizer");
-    
-    // Overlay resize controls
-    const resizeSmallOverlay = document.getElementById("resizeSmallOverlay");
-    const resizeMediumOverlay = document.getElementById("resizeMediumOverlay");
-    const resizeLargeOverlay = document.getElementById("resizeLargeOverlay");
+
+    // Shape state: 'circle' | 'square' | 'vertical'
+    let shape = 'circle';
+
+    function applyShape(s) {
+      shape = s;
+      if (s === 'circle') {
+        video.style.borderRadius = '50%';
+        video.style.aspectRatio = '1 / 1';
+      } else if (s === 'square') {
+        video.style.borderRadius = '12px';
+        video.style.aspectRatio = '1 / 1';
+      } else if (s === 'vertical') {
+        video.style.borderRadius = '16px';
+        video.style.aspectRatio = '9 / 16';
+      }
+    }
+
+    function applySize(size) {
+      const dims = {
+        circle:   { S: [200, 200],  M: [320, 320],  L: [480, 480]  },
+        square:   { S: [200, 200],  M: [320, 320],  L: [480, 480]  },
+        vertical: { S: [200, 356],  M: [320, 569],  L: [480, 853]  },
+      };
+      const [w, h] = dims[shape][size];
+      ipcRenderer.send('resize-overlay', w, h);
+    }
+
+    ipcRenderer.on('set-shape', (_, s) => {
+      applyShape(s);
+    });
+
+    ipcRenderer.on('set-size', (_, size) => {
+      applySize(size);
+    });
 
     // track lock state
     let locked = false; // Changed default to false (unlocked)
     ipcRenderer.on("lock-changed", (_, value) => {
       locked = !!value;
       // when unlocked overlay receives mouse events, but we still respect locked flag to disable drag/resize logic
-    });
-
-    // Overlay resize button functionality
-    function updateOverlayResizeButtons(activeButton) {
-      const buttons = [resizeSmallOverlay, resizeMediumOverlay, resizeLargeOverlay];
-      buttons.forEach(btn => btn.classList.remove("active"));
-      if (activeButton) {
-        activeButton.classList.add("active");
-      }
-    }
-
-    // Update button states based on current window size
-    function updateButtonStatesFromSize() {
-      const currentSize = Math.min(window.innerWidth, window.innerHeight) - 80; // Account for extra height
-      if (currentSize <= 220) {
-        updateOverlayResizeButtons(resizeSmallOverlay);
-      } else if (currentSize <= 340) {
-        updateOverlayResizeButtons(resizeMediumOverlay);
-      } else {
-        updateOverlayResizeButtons(resizeLargeOverlay);
-      }
-    }
-
-    resizeSmallOverlay.addEventListener("click", (e) => {
-      if (locked) return;
-      e.stopPropagation();
-      updateOverlayResizeButtons(resizeSmallOverlay);
-      ipcRenderer.send("resize-overlay", 200, 200); // Using resize-overlay to ensure controls reposition
-    });
-
-    resizeMediumOverlay.addEventListener("click", (e) => {
-      if (locked) return;
-      e.stopPropagation();
-      updateOverlayResizeButtons(resizeMediumOverlay);
-      ipcRenderer.send("resize-overlay", 320, 320); // Using resize-overlay to ensure controls reposition
-    });
-
-    resizeLargeOverlay.addEventListener("click", (e) => {
-      if (locked) return;
-      e.stopPropagation();
-      updateOverlayResizeButtons(resizeLargeOverlay);
-      ipcRenderer.send("resize-overlay", 480, 480); // Using resize-overlay to ensure controls reposition
     });
 
     // grab webcam
@@ -234,8 +168,8 @@
         
         // Show the wrapper and resize overlay to default size when camera starts
         wrapper.classList.add("camera-active");
-        ipcRenderer.send("resize-overlay", 320, 320); // Default to medium size
-        updateOverlayResizeButtons(resizeMediumOverlay); // Set medium as active
+        applyShape(shape); // re-apply current shape to new video element
+        applySize('M'); // uses current shape to pick correct dimensions
       } catch (err) {
         console.error("webcam error:", err);
         video.srcObject = null;
@@ -259,12 +193,6 @@
       ipcRenderer.send("resize-overlay", 1, 1); // Minimal size to make desktop accessible
     }
     
-    // Don't auto-start camera anymore
-    // initWebcam();
-
-    // Start with minimal overlay size since no camera is active
-    ipcRenderer.send("resize-overlay", 1, 1);
-
     // Listen for camera start/stop commands from controls
     ipcRenderer.on("start-camera", (_, cameraId) => {
       initWebcam(cameraId);
@@ -482,19 +410,20 @@
 
     window.addEventListener("mousemove", (e) => {
       if (!resizing) return;
-      // Calculate the maximum of width and height changes to keep it square
       let deltaW = e.screenX - startScreenX;
       let deltaH = e.screenY - startScreenY;
-      let delta = Math.max(deltaW, deltaH); // Use the larger delta to maintain square aspect ratio
-      
-      let newSize = Math.max(150, Math.min(startW, startH) + delta); // Minimum 150px, start from smaller dimension
-      ipcRenderer.send("resize-overlay", newSize, newSize); // Use resize-overlay and ensure square
+      if (shape === 'vertical') {
+        let newW = Math.max(150, startW + deltaW);
+        let newH = Math.round(newW * 16 / 9);
+        ipcRenderer.send("resize-overlay", newW, newH);
+      } else {
+        let delta = Math.max(deltaW, deltaH);
+        let newSize = Math.max(150, Math.min(startW, startH) + delta);
+        ipcRenderer.send("resize-overlay", newSize, newSize);
+      }
     });
 
     window.addEventListener("mouseup", () => { 
-      if (resizing) {
-        updateButtonStatesFromSize(); // Update button states after manual resize
-      }
       resizing = false;
       resizer.classList.remove("resizing");
     });

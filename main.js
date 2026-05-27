@@ -8,6 +8,7 @@ const {
   shell,
   Tray,
   Menu,
+  screen,
 } = require("electron");
 const fs = require("fs");
 const path = require("path");
@@ -48,8 +49,31 @@ function trackEvent(eventName, properties = {}) {
 
 let overlayWin;
 let controlWin;
+let settingsWin = null;
 let tray = null;
 let lastRecordingPath = null;
+
+// Config persistence
+function getConfigPath() {
+  return path.join(app.getPath('userData'), 'bloom-config.json');
+}
+
+function loadConfig() {
+  try {
+    const raw = fs.readFileSync(getConfigPath(), 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function saveConfig(config) {
+  try {
+    fs.writeFileSync(getConfigPath(), JSON.stringify(config, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save config:', err);
+  }
+}
 
 function createWindows() {
   // Set up display media request handler for screen recording
@@ -70,8 +94,8 @@ function createWindows() {
   );
 
   // initial overlay window size & position
-  const startW = 520;
-  const startH = 600; // Increased to accommodate resize controls beneath video
+  const startW = 320;
+  const startH = 320;
   const startX = 100;
   const startY = 100;
 
@@ -93,17 +117,23 @@ function createWindows() {
     },
   });
 
-  // small clickable control window (checkbox)
+  // small clickable control window pinned to right edge, vertically centred
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+  const stripW = 72;
+  const stripH = 436;
+  const stripX = sw - stripW - 16;
+  const stripY = Math.round((sh - stripH) / 2);
+
   controlWin = new BrowserWindow({
-    x: startX + startW + 10, // Position to the right of overlay with 10px gap
-    y: startY - 10, // Slightly above overlay
-    width: 320, // Increased width for new design
-    height: 500, // Increased height to accommodate all controls
+    x: stripX,
+    y: stripY,
+    width: stripW,
+    height: stripH,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
-    focusable: true, // must be focusable to click
+    focusable: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -125,6 +155,8 @@ function createWindows() {
   // After renderer loads, send initial lock state so UI can reflect it
   overlayWin.webContents.once("did-finish-load", () => {
     overlayWin.webContents.send("lock-changed", false);
+    // Auto-start camera with default device (null = let renderer pick default)
+    overlayWin.webContents.send("start-camera", null);
   });
   controlWin.webContents.once("did-finish-load", () => {
     controlWin.webContents.send("lock-changed", false);
@@ -133,58 +165,13 @@ function createWindows() {
   // Move overlay window (called from overlay renderer during dragging)
   ipcMain.on("move-window", (_, x, y) => {
     overlayWin.setPosition(Math.round(x), Math.round(y));
-    // keep control window positioned to the right of overlay
-    const b = overlayWin.getBounds();
-    controlWin.setPosition(
-      b.x + b.width + 10, // Position to right with 10px gap
-      b.y - 10,
-      false
-    );
-  });
-
-  // Move controls window (called from controls renderer during dragging)
-  ipcMain.on("move-controls", (_, x, y) => {
-    controlWin.setPosition(Math.round(x), Math.round(y));
-    // Move overlay window to maintain relative position (controls to right of overlay)
-    const controlBounds = controlWin.getBounds();
-    const overlayBounds = overlayWin.getBounds();
-    overlayWin.setPosition(
-      controlBounds.x - overlayBounds.width - 10, // Position overlay to left of controls with 10px gap
-      controlBounds.y + 10,
-      false
-    );
   });
 
   // Resize overlay window (called from controls when using preset sizes)
   ipcMain.on("resize-overlay", (_, w, h) => {
-    // Add extra height for resize controls positioned beneath the video
-    const extraHeight = 80; // Space for controls positioned at bottom: -45px
-    
-    // On Linux, we need to temporarily enable resizing for setSize() to work
     overlayWin.setResizable(true);
-    overlayWin.setSize(Math.round(w), Math.round(h + extraHeight));
+    overlayWin.setSize(Math.round(w), Math.round(h));
     overlayWin.setResizable(false);
-    
-    // Reposition controls to maintain alignment to the right
-    const overlayBounds = overlayWin.getBounds();
-    controlWin.setPosition(
-      overlayBounds.x + overlayBounds.width + 10, // Position to right with 10px gap
-      overlayBounds.y - 10,
-      false
-    );
-  });
-
-  // Resize controls window (called from controls when collapsing/expanding)
-  ipcMain.on("resize-controls", (_, w, h) => {
-    trackEvent("resize-controls", { width: w, height: h });
-    controlWin.setSize(Math.round(w), Math.round(h));
-    // Reposition to maintain alignment to the right of overlay
-    const overlayBounds = overlayWin.getBounds();
-    controlWin.setPosition(
-      overlayBounds.x + overlayBounds.width + 10, // Position to right with 10px gap
-      overlayBounds.y - 10,
-      false
-    );
   });
 
   // Lock toggle from control window
@@ -255,8 +242,9 @@ function createWindows() {
     try {
       const { buffer, filename } = data;
 
-      // Save to Desktop by default
-      const desktopPath = path.join(os.homedir(), "Desktop");
+      // Save to configured folder or Desktop by default
+      const config = loadConfig();
+      const desktopPath = config.saveFolder || path.join(os.homedir(), "Desktop");
       const filePath = path.join(desktopPath, filename);
 
       // Convert array back to Buffer
@@ -298,9 +286,119 @@ function createWindows() {
     }
   });
 
+  // Set shape on overlay
+  ipcMain.on("set-shape", (_, shape) => {
+    overlayWin.webContents.send("set-shape", shape);
+    trackEvent("set-shape", { shape });
+  });
+
+  // Set size on overlay
+  ipcMain.on("set-size", (_, size) => {
+    overlayWin.webContents.send("set-size", size);
+    trackEvent("set-size", { size });
+  });
+
+  // Get configured save folder
+  ipcMain.on("get-save-folder", (event) => {
+    const config = loadConfig();
+    const folder = config.saveFolder || path.join(os.homedir(), 'Desktop');
+    event.sender.send("save-folder-chosen", folder);
+  });
+
+  // Choose save folder via dialog
+  ipcMain.on("choose-save-folder", async (event) => {
+    const parent = (settingsWin && !settingsWin.isDestroyed()) ? settingsWin : controlWin;
+    const result = await dialog.showOpenDialog(parent, {
+      properties: ['openDirectory'],
+      title: 'Choose save location for recordings',
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      const folder = result.filePaths[0];
+      event.sender.send("save-folder-chosen", folder);
+      trackEvent("save-folder-browsed", { folder });
+    }
+  });
+
+  // Mic selection (handled in renderer; stored for recording use)
+  ipcMain.on("start-mic", (_, micId) => {
+    trackEvent("mic-selected", { mic_id: micId });
+  });
+
+  ipcMain.on("stop-mic", () => {
+    trackEvent("mic-stopped");
+  });
+
+  // Expand control strip to show device popup
+  ipcMain.on("show-device-popup", () => {
+    const { width: sw } = screen.getPrimaryDisplay().workAreaSize;
+    const expandedW = 320;
+    const stripY = controlWin.getBounds().y;
+    const expandedX = sw - expandedW - 16;
+    controlWin.setResizable(true);
+    controlWin.setBounds({ x: expandedX, y: stripY, width: expandedW, height: 436 });
+    controlWin.setResizable(false);
+  });
+
+  // Collapse control strip back to narrow strip
+  ipcMain.on("hide-device-popup", () => {
+    const { width: sw } = screen.getPrimaryDisplay().workAreaSize;
+    const stripW = 72;
+    const stripY = controlWin.getBounds().y;
+    const stripX = sw - stripW - 16;
+    controlWin.setResizable(true);
+    controlWin.setBounds({ x: stripX, y: stripY, width: stripW, height: 436 });
+    controlWin.setResizable(false);
+  });
+
+  // Open settings in its own centred window
+  ipcMain.on("open-settings-window", () => {
+    if (settingsWin && !settingsWin.isDestroyed()) {
+      settingsWin.focus();
+      return;
+    }
+    const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+    settingsWin = new BrowserWindow({
+      width: 400,
+      height: 240,
+      x: Math.round((sw - 400) / 2),
+      y: Math.round((sh - 240) / 2),
+      frame: false,
+      transparent: false,
+      alwaysOnTop: true,
+      resizable: false,
+      focusable: true,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        enableRemoteModule: false,
+        webSecurity: false,
+      },
+    });
+    settingsWin.loadFile("settings.html");
+    settingsWin.on("closed", () => { settingsWin = null; });
+  });
+
+  // Close settings window
+  ipcMain.on("close-settings", () => {
+    if (settingsWin && !settingsWin.isDestroyed()) settingsWin.close();
+  });
+
+  // Settings confirmed save folder — relay to controlWin
+  ipcMain.on("save-folder-confirmed", (_, folder) => {
+    const config = loadConfig();
+    config.saveFolder = folder;
+    saveConfig(config);
+    if (controlWin && !controlWin.isDestroyed()) {
+      controlWin.webContents.send("save-folder-chosen", folder);
+    }
+    if (settingsWin && !settingsWin.isDestroyed()) settingsWin.close();
+    trackEvent("save-folder-changed", { folder });
+  });
+
   // If overlay is closed, close control window too
   overlayWin.on("closed", () => {
     trackEvent("overlay-closed");
+    if (settingsWin && !settingsWin.isDestroyed()) settingsWin.close();
     if (controlWin && !controlWin.isDestroyed()) controlWin.close();
     overlayWin = null;
   });

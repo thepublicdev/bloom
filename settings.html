@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Settings</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    #card {
+      background: #1a1a2e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 28px 28px 24px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #titleBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      -webkit-app-region: drag;
+    }
+
+    #titleBar h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: white;
+      margin: 0;
+    }
+
+    #closeBtn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: no-drag;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #closeBtn:hover {
+      background: rgba(255,71,87,0.2);
+      color: #ff4757;
+    }
+
+    #closeBtn i {
+      width: 14px;
+      height: 14px;
+    }
+
+    #content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #content > div > label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    #folderRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    #folderRow i {
+      width: 16px;
+      height: 16px;
+      color: rgba(255,255,255,0.35);
+      flex-shrink: 0;
+    }
+
+    #saveFolderPath {
+      flex: 1;
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    #browseFolderBtn {
+      background: rgba(255,206,7,0.12);
+      color: #ffce07;
+      border: 1px solid rgba(255,206,7,0.25);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    #browseFolderBtn:hover {
+      background: rgba(255,206,7,0.22);
+    }
+
+    #actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    #cancelBtn {
+      background: transparent;
+      color: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 9px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    #cancelBtn:hover {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.7);
+    }
+
+    #doneBtn {
+      background: #ffce07;
+      color: #1a1a2e;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #doneBtn:hover {
+      background: #ffd633;
+    }
+  </style>
+</head>
+<body>
+  <div id="card">
+    <div id="titleBar">
+      <h2>Settings</h2>
+      <button id="closeBtn"><i data-lucide="x"></i></button>
+    </div>
+    <div id="content">
+      <div>
+        <label>Save Location</label>
+        <div id="folderRow">
+          <i data-lucide="folder-open"></i>
+          <span id="saveFolderPath">~/Desktop</span>
+          <button id="browseFolderBtn">Browse…</button>
+        </div>
+      </div>
+      <div id="actions">
+        <button id="cancelBtn">Cancel</button>
+        <button id="doneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let currentFolder = '';
+    let pendingFolder = '';
+
+    const saveFolderPathEl = document.getElementById('saveFolderPath');
+    const browseFolderBtn  = document.getElementById('browseFolderBtn');
+    const cancelBtn        = document.getElementById('cancelBtn');
+    const doneBtn          = document.getElementById('doneBtn');
+    const closeBtn         = document.getElementById('closeBtn');
+
+    // Request current save folder on load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      ipcRenderer.send('get-save-folder');
+    });
+
+    // Receive current folder from main
+    ipcRenderer.on('save-folder-chosen', (_, folder) => {
+      currentFolder = folder;
+      pendingFolder = folder;
+      saveFolderPathEl.textContent = folder;
+    });
+
+    // Browse for folder
+    browseFolderBtn.addEventListener('click', () => {
+      ipcRenderer.send('choose-save-folder');
+    });
+
+    // Cancel — close without saving
+    cancelBtn.addEventListener('click', () => {
+      ipcRenderer.send('close-settings');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      ipcRenderer.send('close-settings');
+    });
+
+    // Done — confirm and close
+    doneBtn.addEventListener('click', () => {
+      ipcRenderer.send('save-folder-confirmed', pendingFolder || currentFolder);
+    });
+  </script>
+</body>
+</html>
