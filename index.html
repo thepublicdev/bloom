@@ -45,7 +45,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 50%;
       display: block;
       box-shadow: 0 0 12px rgba(0,0,0,0.45);
       -webkit-user-drag: none;
@@ -107,18 +106,16 @@
 
     // Shape state: 'circle' | 'square' | 'vertical'
     let shape = 'circle';
+    let currentSize = 'M';
 
     function applyShape(s) {
       shape = s;
       if (s === 'circle') {
         video.style.borderRadius = '50%';
-        video.style.aspectRatio = '1 / 1';
       } else if (s === 'square') {
         video.style.borderRadius = '12px';
-        video.style.aspectRatio = '1 / 1';
       } else if (s === 'vertical') {
         video.style.borderRadius = '16px';
-        video.style.aspectRatio = '9 / 16';
       }
     }
 
@@ -134,9 +131,11 @@
 
     ipcRenderer.on('set-shape', (_, s) => {
       applyShape(s);
+      applySize(currentSize);
     });
 
     ipcRenderer.on('set-size', (_, size) => {
+      currentSize = size;
       applySize(size);
     });
 
